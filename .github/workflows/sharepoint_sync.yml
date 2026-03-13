@@ -1,9 +1,9 @@
 name: SharePoint Sync to Dashboard
 
 on:
-  schedule:
-    # Roda todos os dias as 03h00 UTC da madrugada (meia noite horario de brasilia)
-    - cron: '0 3 * * *'
+  # schedule:
+  #   # Roda todos os dias as 03h00 UTC da madrugada (meia noite horario de brasilia)
+  #   - cron: '0 3 * * *'
   
   # Habilita execução manual do GitHub Actions se você quiser
   workflow_dispatch:
