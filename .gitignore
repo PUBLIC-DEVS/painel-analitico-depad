@@ -39,13 +39,3 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-token_cache.bin
-*.log
-
-# Ignorar planilhas de teste na nuvem
-dados_amostra/

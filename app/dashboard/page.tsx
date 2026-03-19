@@ -1,17 +1,15 @@
-import { AppSidebar } from "@/components/app-sidebar"
-import { ChartAreaInteractive } from "@/components/chart-area-interactive"
-import { DataTable } from "@/components/data-table"
-import { SectionCards } from "@/components/section-cards"
-import { SiteHeader } from "@/components/site-header"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-
-import data from "./data.json"
+'use client'
+import { useEffect, useState } from "react";
 
 export default function Page() {
-  return (
-    <main>
-      <SiteHeader name="Painel Geral" />
-      
-    </main>
-  )
+  const [usuario, setUsuario] = useState<any>(null);
+
+  useEffect(() => {
+    fetch("/api/dashboard/user")
+      .then(res => res.json())
+      .then(setUsuario)
+      .catch(console.error);
+  }, []);
+
+  return <div>{JSON.stringify(usuario)}</div>;
 }

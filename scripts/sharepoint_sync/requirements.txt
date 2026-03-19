@@ -1,6 +1,0 @@
-Office366-REST-Python-Client
-pandas
-supabase
-python-dotenv
-openpyxl
-pytest
