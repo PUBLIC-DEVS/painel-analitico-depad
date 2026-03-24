@@ -1,5 +1,4 @@
 'use client'
-
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -9,6 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { DashboardHeader } from "@/components/dashboard-header";
+import { SpotlightProvider, SpotlightModal } from "@/components/spotlight";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -30,16 +30,19 @@ export default function DashboardLayout({
   if (status === "unauthenticated") return null;
 
   return (
-    <div className={cn("font-sans", inter.variable)}>
-      <TooltipProvider>
-        <SidebarProvider>
-          <AppSidebar />
-          <SidebarInset>
-            <DashboardHeader />
-            {children}
-          </SidebarInset>
-        </SidebarProvider>
-      </TooltipProvider>
-    </div>
+    <SpotlightProvider>
+      <SpotlightModal />
+      <div className={cn("font-sans", inter.variable)}>
+        <TooltipProvider>
+          <SidebarProvider>
+            <AppSidebar />
+            <SidebarInset className="min-w-0 overflow-hidden">
+              <DashboardHeader />
+              {children}
+            </SidebarInset>
+          </SidebarProvider>
+        </TooltipProvider>
+      </div>
+    </SpotlightProvider>
   );
 }
