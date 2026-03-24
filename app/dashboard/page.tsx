@@ -21,7 +21,7 @@ function Filter() {
   return (
     <Drawer direction="right">
       <DrawerTrigger asChild>
-        <Button variant="default" size="sm">
+        <Button variant="default" size="lg">
           <SlidersHorizontal className="w-4 h-4 mr-2" />
           Filtros
         </Button>
@@ -52,7 +52,6 @@ export default function Page() {
     <main>
       <Title
         title="Dashboard geral"
-        subtitle="Visualização unificada dos dados"
         filterComponent={<Filter />}
       />
 

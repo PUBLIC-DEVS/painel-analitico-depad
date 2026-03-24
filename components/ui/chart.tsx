@@ -125,6 +125,8 @@ function ChartTooltipContent({
     indicator?: "line" | "dot" | "dashed"
     nameKey?: string
     labelKey?: string
+    // ADICIONE ESTA LINHA ABAIXO para forçar o TS a aceitar o payload
+    payload?: any[] 
   }) {
   const { config } = useChart()
 

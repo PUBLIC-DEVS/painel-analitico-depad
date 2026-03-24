@@ -9,6 +9,7 @@ import {
   useMapEvents,
 } from "react-leaflet";
 import { useState } from "react";
+import { LatLng, LatLngExpression } from "leaflet";
 
 // Simulando o que o seu endpoint vai retornar após limpar os dados do Graph
 const comunidades = [
@@ -19,7 +20,7 @@ const comunidades = [
 
 export default function Page() {
   function LocationMarker() {
-    const [position, setPosition] = useState(null);
+    const [position, setPosition] = useState<LatLngExpression | null>(null);
     const map = useMapEvents({
       click() {
         map.locate();
