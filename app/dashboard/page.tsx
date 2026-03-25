@@ -65,9 +65,8 @@ export default function Page() {
           <BarPorEdital />
         </div>
         {/* Linha 2: Recurso por Edital + Área de Pagamentos */}
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4">
           <BarRecursoPorEdital />
-          <AreaPagamentos />
         </div>
 
         {/* Tabela completa */}

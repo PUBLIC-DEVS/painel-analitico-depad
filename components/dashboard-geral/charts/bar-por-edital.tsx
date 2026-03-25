@@ -10,6 +10,7 @@ import {
   ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent,
 } from "@/components/ui/chart";
 import { TrendingUp } from "lucide-react";
+import { fetchDashboard } from "@/lib/dashboard-cache";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -17,26 +18,6 @@ import { TrendingUp } from "lucide-react";
 interface EditalEntry {
   edital: string;
   total: number;
-}
-
-// ---------------------------------------------------------------------------
-// Fetch — substitua o setTimeout por fetch real
-// ---------------------------------------------------------------------------
-async function fetchData(): Promise<EditalEntry[]> {
-  return new Promise((resolve) =>
-    setTimeout(
-      () =>
-        resolve([
-          { edital: "2018", total: 229 },
-          { edital: "2019", total: 198 },
-          { edital: "2021", total: 203 },
-          { edital: "2022", total: 19  },
-          { edital: "2024", total: 178 },
-          { edital: "2025", total: 234 },
-        ]),
-      1800,
-    ),
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -81,7 +62,7 @@ export default function BarPorEdital() {
   const [data, setData] = useState<EditalEntry[] | null>(null);
 
   useEffect(() => {
-    fetchData().then(setData);
+    fetchDashboard<EditalEntry[]>("editais").then(setData).catch(console.error);
   }, []);
 
   if (!data) return <BarPorEditalSkeleton />;

@@ -10,6 +10,7 @@ import {
   ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent,
 } from "@/components/ui/chart";
 import { DollarSign } from "lucide-react";
+import { fetchDashboard } from "@/lib/dashboard-cache";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -17,23 +18,6 @@ import { DollarSign } from "lucide-react";
 interface RecursoEntry {
   edital: string;
   total: number;
-}
-
-// ---------------------------------------------------------------------------
-// Fetch — substitua o setTimeout por fetch real
-// ---------------------------------------------------------------------------
-async function fetchData(): Promise<RecursoEntry[]> {
-  return new Promise((resolve) =>
-    setTimeout(
-      () =>
-        resolve([
-          { edital: "2021", total: 80543191.32 },
-          { edital: "2022", total: 7047446.76  },
-          { edital: "2024", total: 67814503.92 },
-        ]),
-      1800,
-    ),
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -81,7 +65,7 @@ function formatBRLShort(value: number) {
 }
 
 // ---------------------------------------------------------------------------
-// Chart config — fora do componente para evitar recriação
+// Chart config
 // ---------------------------------------------------------------------------
 const chartConfig = {
   total: { label: "Recurso Anual", color: "hsl(var(--chart-3))" },
@@ -94,7 +78,7 @@ export default function BarRecursoPorEdital() {
   const [data, setData] = useState<RecursoEntry[] | null>(null);
 
   useEffect(() => {
-    fetchData().then(setData);
+    fetchDashboard<RecursoEntry[]>("recursos").then(setData).catch(console.error);
   }, []);
 
   const totalGeral = useMemo(
@@ -133,7 +117,7 @@ export default function BarRecursoPorEdital() {
               dataKey="total"
               fill="var(--color-total)"
               radius={[6, 6, 0, 0]}
-              isAnimationActive={true}
+              isAnimationActive
               animationDuration={350}
               animationEasing="ease-out"
               animationBegin={0}

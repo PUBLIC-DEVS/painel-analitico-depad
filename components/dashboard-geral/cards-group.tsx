@@ -2,14 +2,9 @@
 
 import { useEffect, useState } from "react";
 import {
-  BedDouble,
-  User,
-  Users,
-  Baby,
-  Wallet,
-  FileText,
-  Home,
+  BedDouble, User, Users, Baby, Wallet, FileText, Home,
 } from "lucide-react";
+import { fetchDashboard } from "@/lib/dashboard-cache";
 
 // ---------------------------------------------------------------------------
 // Skeleton
@@ -54,80 +49,46 @@ function Card({ label, value, icon }: CardProps) {
 }
 
 // ---------------------------------------------------------------------------
-// Analytics
+// Types + config
 // ---------------------------------------------------------------------------
-const STATS_CONFIG = [
-  { label: "Total de Vagas",           icon: <BedDouble size={16} /> },
-  { label: "Vagas Masculinas",         icon: <User size={16} /> },
-  { label: "Vagas Femininas",          icon: <Users size={16} /> },
-  { label: "Vagas para Mães",          icon: <Baby size={16} /> },
-  { label: "Orçamento Anual",          icon: <Wallet size={16} /> },
-  { label: "Contratos Registrados",    icon: <FileText size={16} /> },
-  { label: "Comunidades Terapêuticas", icon: <Home size={16} /> },
-];
-
 type StatsData = {
-  totalVagas: number;
-  vagasMasculinas: number;
-  vagasFemininas: number;
-  vagasMaes: number;
-  orcamentoAnual: string;
-  contratosRegistrados: number;
+  totalVagas:              number;
+  vagasMasculinas:         number;
+  vagasFemininas:          number;
+  vagasMaes:               number;
+  orcamentoAnual:          string;
+  contratosRegistrados:    number;
   comunidadesTerapeuticas: number;
 };
 
-async function fetchStats(): Promise<StatsData> {
-  // Substitua por fetch real quando a API estiver pronta.
-  // Exemplo: const res = await fetch("/api/stats"); return res.json();
-  return new Promise((resolve) =>
-    setTimeout(
-      () =>
-        resolve({
-          totalVagas: 1_240,
-          vagasMasculinas: 780,
-          vagasFemininas: 380,
-          vagasMaes: 80,
-          orcamentoAnual: "R$ 4.800.000,00",
-          contratosRegistrados: 312,
-          comunidadesTerapeuticas: 97,
-        }),
-      1_800,
-    ),
-  );
-}
+const STATS_CONFIG = [
+  { key: "totalVagas"              as const, label: "Total de Vagas",           icon: <BedDouble size={16} /> },
+  { key: "vagasMasculinas"         as const, label: "Vagas Masculinas",          icon: <User      size={16} /> },
+  { key: "vagasFemininas"          as const, label: "Vagas Femininas",           icon: <Users     size={16} /> },
+  { key: "vagasMaes"               as const, label: "Vagas para Mães",           icon: <Baby      size={16} /> },
+  { key: "orcamentoAnual"          as const, label: "Orçamento Anual",           icon: <Wallet    size={16} /> },
+  { key: "contratosRegistrados"    as const, label: "Contratos Registrados",     icon: <FileText  size={16} /> },
+  { key: "comunidadesTerapeuticas" as const, label: "Comunidades Terapêuticas",  icon: <Home      size={16} /> },
+];
 
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 export default function CardsGroup() {
   const [data, setData] = useState<StatsData | null>(null);
 
   useEffect(() => {
-    fetchStats().then(setData);
+    fetchDashboard<StatsData>("stats").then(setData).catch(console.error);
   }, []);
-
-  const values = data
-    ? [
-        data.totalVagas,
-        data.vagasMasculinas,
-        data.vagasFemininas,
-        data.vagasMaes,
-        data.orcamentoAnual,
-        data.contratosRegistrados,
-        data.comunidadesTerapeuticas,
-      ]
-    : [];
 
   return (
     <div className="flex flex-wrap gap-4">
-      {STATS_CONFIG.map((cfg, i) =>
+      {STATS_CONFIG.map((cfg) =>
         data ? (
-          <Card
-            key={cfg.label}
-            label={cfg.label}
-            value={values[i]}
-            icon={cfg.icon}
-          />
+          <Card key={cfg.key} label={cfg.label} value={data[cfg.key]} icon={cfg.icon} />
         ) : (
-          <CardSkeleton key={cfg.label} />
-        ),
+          <CardSkeleton key={cfg.key} />
+        )
       )}
     </div>
   );

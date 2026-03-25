@@ -67,6 +67,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import Title from "@/components/Title";
+import { PagamentosData } from "@/app/api/dashboard/contratos/route";
 
 // ============================================================
 // TYPES
@@ -96,57 +97,25 @@ interface Comunidade {
   data_vencimento_ct: string;
 }
 
-// ============================================================
-// MOCK DATA — substitua pelos fetches reais
-// ============================================================
-const MOCK_COMUNIDADES: Comunidade[] = Array.from({ length: 60 }, (_, i) => {
-  const ufs = ["RS", "MG", "SP", "PR", "SC", "CE", "AL", "RJ", "GO", "DF"];
-  const anos = [2018, 2019, 2021, 2022, 2024, 2025];
-  const st = (["ATIVO", "ATIVO", "ATIVO", "FINALIZADO", "RESCINDIDO"] as const)[
-    i % 5
-  ];
-  const uf = ufs[i % ufs.length];
-  const ano = anos[i % anos.length];
-  const vagas = 10 + (i % 40);
-  return {
-    contrato_ano: `CT-${1000 + i}/${ano}`,
-    razao_social: `Comunidade Terapêutica ${String.fromCharCode(65 + (i % 26))} ${i + 1}`,
-    nome_fantasia: `CT ${String.fromCharCode(65 + (i % 26))}${i + 1}`,
-    cnpj: `${10 + i}.000.00${i % 9}/0001-${10 + (i % 90)}`,
-    cidade: [
-      "Porto Alegre",
-      "Belo Horizonte",
-      "São Paulo",
-      "Curitiba",
-      "Florianópolis",
-      "Fortaleza",
-    ][i % 6],
-    uf,
-    contrato: `TED-${2000 + i}`,
-    ano,
-    endereco: `Rua das Flores, ${i + 100}`,
-    telefone: `(61) 9${9000 + i}-0000`,
-    email: `ct${i + 1}@exemplo.org`,
-    vagas_contratadas: vagas,
-    adulto_masc: Math.round(vagas * 0.6),
-    adulto_feminino: Math.round(vagas * 0.3),
-    maes: Math.round(vagas * 0.1),
-    recurso_anual: `R$ ${(vagas * 8_400).toLocaleString("pt-BR")},00`,
-    recurso_mensal: `R$ ${(vagas * 700).toLocaleString("pt-BR")},00`,
-    status_ct: st,
-    data_inicial_ct: `01/0${(i % 12) + 1}/${ano}`,
-    data_vencimento_ct: `31/1${i % 2}/2026`,
-  };
-});
+interface Stats {
+  totalVagas: number;
+  vagasMasculinas: number;
+  vagasFemininas: number;
+  vagasParaMaes: number;
+  orcamentoAnual: string;
+  contratosRegistrados: number;
+  comunidadesTerapeuticas: number;
+}
 
-const MOCK_STATS = {
-  contratosTotais: 60,
-  vagasDisponiveis: 3_200,
-  vagasContratadas: 2_840,
-  vagasMaes: 312,
-  vagasFemininas: 960,
-  vagasMasculinas: 1_568,
-};
+interface EditalEntry {
+  edital: string;
+  total: number;
+}
+
+interface UfEntry {
+  uf: string;
+  total: number;
+}
 
 const MONTHS_PT = [
   "Jan",
@@ -163,65 +132,6 @@ const MONTHS_PT = [
   "Dez",
 ];
 
-function genMonthly(base: number, paidUpTo: number) {
-  return MONTHS_PT.map((mes, i) => ({
-    mes,
-    pago: i < paidUpTo ? Math.round(base * (0.85 + Math.random() * 0.3)) : 0,
-    previsto: Math.round(base),
-  }));
-}
-
-const MONTHLY_DATA: Record<Year, ReturnType<typeof genMonthly>> = {
-  "2023": genMonthly(6_800_000, 12),
-  "2024": genMonthly(7_200_000, 12),
-  "2025": genMonthly(8_100_000, 3),
-  "2026": genMonthly(8_600_000, 0),
-};
-
-const ORCAMENTO = {
-  anual: 155_400_000,
-  mensal: 12_950_000,
-  mediaUso: 11_200_000,
-  avgPct: 86.5,
-  mensal_pct: 100,
-  anual_pct: 86.5,
-};
-
-const EDITAL_DATA = [
-  { edital: "2018", total: 229 },
-  { edital: "2019", total: 198 },
-  { edital: "2021", total: 203 },
-  { edital: "2022", total: 19 },
-  { edital: "2024", total: 178 },
-  { edital: "2025", total: 234 },
-];
-
-const UF_DATA = [
-  { uf: "RS", total: 84 },
-  { uf: "MG", total: 84 },
-  { uf: "SP", total: 57 },
-  { uf: "PR", total: 53 },
-  { uf: "SC", total: 48 },
-  { uf: "CE", total: 36 },
-  { uf: "AL", total: 30 },
-  { uf: "RJ", total: 29 },
-  { uf: "GO", total: 25 },
-  { uf: "PI", total: 22 },
-  { uf: "MA", total: 18 },
-  { uf: "RN", total: 17 },
-  { uf: "BA", total: 13 },
-  { uf: "PE", total: 12 },
-  { uf: "MS", total: 12 },
-  { uf: "DF", total: 11 },
-];
-
-const TOP_VAGAS_DATA = MOCK_COMUNIDADES.filter(
-  (c) => c.vagas_contratadas != null,
-)
-  .sort((a, b) => (b.vagas_contratadas ?? 0) - (a.vagas_contratadas ?? 0))
-  .slice(0, 10)
-  .map((c) => ({ nome: c.nome_fantasia, vagas: c.vagas_contratadas ?? 0 }));
-
 // ============================================================
 // FORMATTERS
 // ============================================================
@@ -237,6 +147,15 @@ function fBRLShort(v: number) {
   if (v >= 1_000_000) return `R$${(v / 1_000_000).toFixed(1)}M`;
   if (v >= 1_000) return `R$${(v / 1_000).toFixed(0)}K`;
   return fBRL(v);
+}
+
+// ============================================================
+// FETCH HELPER
+// ============================================================
+async function fetchResource<T>(resource: string): Promise<T> {
+  const res = await fetch(`/api/dashboard/contratos?resource=${resource}`);
+  if (!res.ok) throw new Error(`Erro ao buscar ${resource}: ${res.status}`);
+  return res.json() as Promise<T>;
 }
 
 // ============================================================
@@ -314,6 +233,13 @@ const cfgPag: ChartConfig = {
 // ============================================================
 function AbaComunidades() {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [comunidades, setComunidades] = useState<Comunidade[]>([]);
+  const [editalData, setEditalData] = useState<EditalEntry[]>([]);
+  const [ufData, setUfData] = useState<UfEntry[]>([]);
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [ufFilter, setUfFilter] = useState("all");
@@ -321,24 +247,56 @@ function AbaComunidades() {
   const [pageSize, setPageSize] = useState(25);
 
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 1200);
-    return () => clearTimeout(t);
+    setLoading(true);
+    setError(null);
+
+    Promise.all([
+      fetchResource<Stats>("stats"),
+      fetchResource<Comunidade[]>("comunidades"),
+      fetchResource<EditalEntry[]>("editais"),
+      fetchResource<UfEntry[]>("uf"),
+    ])
+      .then(([statsData, comunidadesData, editaisData, ufDataRes]) => {
+        setStats(statsData);
+        setComunidades(comunidadesData);
+        setEditalData(editaisData);
+        setUfData(ufDataRes);
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
   }, []);
 
-  const data = MOCK_COMUNIDADES;
-
   const ufs = useMemo(
-    () => Array.from(new Set(data.map((r) => r.uf))).sort(),
-    [data],
+    () =>
+      Array.from(new Set(comunidades.map((r) => r.uf)))
+        .filter(Boolean) // 👈 Removes "", null, and undefined
+        .sort(),
+    [comunidades],
   );
   const statuses = useMemo(
-    () => Array.from(new Set(data.map((r) => r.status_ct))).sort(),
-    [data],
+    () =>
+      Array.from(new Set(comunidades.map((r) => r.status_ct)))
+        .filter(Boolean) // 👈 Removes "", null, and undefined
+        .sort(),
+    [comunidades],
+  );
+
+  const topVagasData = useMemo(
+    () =>
+      comunidades
+        .filter((c) => c.vagas_contratadas != null)
+        .sort((a, b) => (b.vagas_contratadas ?? 0) - (a.vagas_contratadas ?? 0))
+        .slice(0, 10)
+        .map((c) => ({
+          nome: c.nome_fantasia,
+          vagas: c.vagas_contratadas ?? 0,
+        })),
+    [comunidades],
   );
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return data.filter((row) => {
+    return comunidades.filter((row) => {
       const ms =
         !search ||
         row.razao_social?.toLowerCase().includes(q) ||
@@ -351,12 +309,11 @@ function AbaComunidades() {
         (ufFilter === "all" || row.uf === ufFilter)
       );
     });
-  }, [data, search, statusFilter, ufFilter]);
+  }, [comunidades, search, statusFilter, ufFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
-
-  const totalEdital = EDITAL_DATA.reduce((a, d) => a + d.total, 0);
+  const totalEdital = editalData.reduce((a, d) => a + d.total, 0);
 
   const COLS = [
     { key: "contrato_ano", label: "Contrato/Ano" },
@@ -375,42 +332,50 @@ function AbaComunidades() {
     { key: "data_vencimento_ct", label: "Vencimento" },
   ] as const;
 
+  if (error) {
+    return (
+      <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+        Erro ao carregar dados: {error}
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4">
       {/* ── CARDS ── */}
       <div className="flex flex-wrap gap-3">
-        {loading ? (
+        {loading || !stats ? (
           Array.from({ length: 6 }).map((_, i) => <StatCardSkeleton key={i} />)
         ) : (
           <>
             <StatCard
-              label="Contratos Totais"
-              value={MOCK_STATS.contratosTotais.toLocaleString("pt-BR")}
+              label="Contratos Registrados"
+              value={stats.contratosRegistrados.toLocaleString("pt-BR")}
               icon={<FileText size={16} />}
             />
             <StatCard
-              label="Vagas Disponíveis"
-              value={MOCK_STATS.vagasDisponiveis.toLocaleString("pt-BR")}
+              label="Total de Vagas"
+              value={stats.totalVagas.toLocaleString("pt-BR")}
               icon={<BedDouble size={16} />}
             />
             <StatCard
-              label="Vagas Contratadas"
-              value={MOCK_STATS.vagasContratadas.toLocaleString("pt-BR")}
+              label="Comunidades Terapêuticas"
+              value={stats.comunidadesTerapeuticas.toLocaleString("pt-BR")}
               icon={<Home size={16} />}
             />
             <StatCard
               label="Vagas para Mães Nutrizes"
-              value={MOCK_STATS.vagasMaes.toLocaleString("pt-BR")}
+              value={stats.vagasParaMaes.toLocaleString("pt-BR")}
               icon={<Baby size={16} />}
             />
             <StatCard
               label="Vagas Femininas"
-              value={MOCK_STATS.vagasFemininas.toLocaleString("pt-BR")}
+              value={stats.vagasFemininas.toLocaleString("pt-BR")}
               icon={<Users size={16} />}
             />
             <StatCard
               label="Vagas Masculinas"
-              value={MOCK_STATS.vagasMasculinas.toLocaleString("pt-BR")}
+              value={stats.vagasMasculinas.toLocaleString("pt-BR")}
               icon={<User size={16} />}
             />
           </>
@@ -432,7 +397,7 @@ function AbaComunidades() {
               <ChartContainer config={cfgEdital} className="h-64 w-full">
                 <BarChart
                   accessibilityLayer
-                  data={EDITAL_DATA}
+                  data={editalData}
                   margin={{ top: 24 }}
                 >
                   <CartesianGrid vertical={false} />
@@ -492,7 +457,7 @@ function AbaComunidades() {
               <ChartContainer config={cfgUF} className="h-64 w-full">
                 <BarChart
                   accessibilityLayer
-                  data={UF_DATA}
+                  data={ufData.slice(0, 16)}
                   layout="vertical"
                   margin={{ left: 0, right: 36, top: 0, bottom: 0 }}
                 >
@@ -541,7 +506,7 @@ function AbaComunidades() {
             <ChartContainer config={cfgVagas} className="h-56 w-full">
               <BarChart
                 accessibilityLayer
-                data={TOP_VAGAS_DATA}
+                data={topVagasData}
                 layout="vertical"
                 margin={{ left: 8, right: 48, top: 0, bottom: 0 }}
               >
@@ -584,9 +549,8 @@ function AbaComunidades() {
           <CardTitle>Comunidades Terapêuticas</CardTitle>
           <CardDescription>
             {filtered.length} comunidade{filtered.length !== 1 ? "s" : ""}{" "}
-            encontrada
-            {filtered.length !== 1 ? "s" : ""}
-            {data.length > 0 && ` de ${data.length} no total`}
+            encontrada{filtered.length !== 1 ? "s" : ""}
+            {comunidades.length > 0 && ` de ${comunidades.length} no total`}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4 min-w-0 overflow-hidden">
@@ -673,7 +637,17 @@ function AbaComunidades() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginated.length === 0 ? (
+                {loading ? (
+                  Array.from({ length: 8 }).map((_, i) => (
+                    <TableRow key={i}>
+                      {COLS.map((col) => (
+                        <TableCell key={col.key} className="px-3">
+                          <Skeleton className="h-4 w-full" />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : paginated.length === 0 ? (
                   <TableRow>
                     <TableCell
                       colSpan={COLS.length}
@@ -752,47 +726,67 @@ function AbaComunidades() {
 // ============================================================
 function AbaPagamentos() {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [pagamentosData, setPagamentosData] = useState<PagamentosData | null>(
+    null,
+  );
   const [activeYear, setActiveYear] = useState<Year>("2025");
   const [showPct, setShowPct] = useState(false);
 
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 1200);
-    return () => clearTimeout(t);
+    setLoading(true);
+    setError(null);
+    fetchResource<PagamentosData>("pagamentos")
+      .then(setPagamentosData)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
   }, []);
 
-  const monthData = MONTHLY_DATA[activeYear];
+  const monthData = pagamentosData?.monthly?.[activeYear] ?? [];
+  const orcamento = pagamentosData?.orcamento?.[activeYear];
+
   const totalPago = monthData.reduce((a, d) => a + d.pago, 0);
   const totalPrev = monthData.reduce((a, d) => a + d.previsto, 0);
   const execPct =
     totalPrev > 0 ? ((totalPago / totalPrev) * 100).toFixed(1) : "0";
 
-  const cardData = [
-    {
-      label: "Orçamento Anual",
-      num: fBRL(ORCAMENTO.anual),
-      pct: `${ORCAMENTO.anual_pct.toFixed(1)}% executado`,
-      icon: <Wallet size={16} />,
-    },
-    {
-      label: "Orçamento Mensal",
-      num: fBRL(ORCAMENTO.mensal),
-      pct: `${ORCAMENTO.mensal_pct.toFixed(0)}% previsto`,
-      icon: <DollarSign size={16} />,
-    },
-    {
-      label: "Média de Uso por Mês",
-      num: fBRL(ORCAMENTO.mediaUso),
-      pct: `${ORCAMENTO.avgPct.toFixed(1)}% da previsão`,
-      icon: <BarChart2 size={16} />,
-    },
-  ];
+  const cardData = orcamento
+    ? [
+        {
+          label: "Orçamento Anual",
+          num: fBRL(orcamento.anual),
+          pct: `${orcamento.anual_pct.toFixed(1)}% executado`,
+          icon: <Wallet size={16} />,
+        },
+        {
+          label: "Orçamento Mensal",
+          num: fBRL(orcamento.mensal),
+          pct: `${orcamento.mensal_pct.toFixed(0)}% previsto`,
+          icon: <DollarSign size={16} />,
+        },
+        {
+          label: "Média de Uso por Mês",
+          num: fBRL(orcamento.mediaUso),
+          pct: `${orcamento.avgPct.toFixed(1)}% da previsão`,
+          icon: <BarChart2 size={16} />,
+        },
+      ]
+    : [];
+
+  if (error) {
+    return (
+      <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+        Erro ao carregar dados: {error}
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4">
       {/* ── CARDS ── */}
       <div className="flex flex-wrap items-end gap-3">
         <div className="flex flex-wrap flex-1 gap-3">
-          {loading
+          {loading || cardData.length === 0
             ? Array.from({ length: 3 }).map((_, i) => (
                 <StatCardSkeleton key={i} />
               ))
@@ -856,7 +850,7 @@ function AbaPagamentos() {
             className="self-start shrink-0 rounded-lg border p-1"
             size="sm"
           >
-            {(["2023", "2024", "2025", "2026"] as Year[]).map((yr) => (
+            {(["2025", "2026"] as Year[]).map((yr) => (
               <ToggleGroupItem
                 key={yr}
                 value={yr}
@@ -975,31 +969,29 @@ function AbaPagamentos() {
 // PAGE
 // ============================================================
 export default function ContratosPage() {
-  const TabChanger = () => {
-    return (
-      <TabsList className="border font-mono">
-        <TabsTrigger value="comunidades">Comunidades</TabsTrigger>
-        <TabsTrigger value="pagamentos">Pagamentos</TabsTrigger>
-      </TabsList>
-    );
-  };
+  const TabChanger = () => (
+    <TabsList className="border font-mono">
+      <TabsTrigger value="comunidades">Comunidades</TabsTrigger>
+      <TabsTrigger value="pagamentos">Pagamentos</TabsTrigger>
+    </TabsList>
+  );
+
   return (
     <div>
       <Tabs defaultValue="comunidades" className="w-full">
-      <Title
-        title="Dashboard de contratos"
-        subtitle=""
-        filterComponent={<TabChanger/>}
-      />
-      <div className="flex flex-col  p-4">
+        <Title
+          title="Dashboard de contratos"
+          subtitle=""
+          filterComponent={<TabChanger />}
+        />
+        <div className="flex flex-col p-4">
           <TabsContent value="comunidades">
             <AbaComunidades />
           </TabsContent>
-
           <TabsContent value="pagamentos">
             <AbaPagamentos />
           </TabsContent>
-      </div>
+        </div>
       </Tabs>
     </div>
   );
