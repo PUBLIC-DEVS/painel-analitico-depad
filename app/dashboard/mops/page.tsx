@@ -1,19 +1,16 @@
 "use client";
 
 import "leaflet/dist/leaflet.css";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   MapContainer,
   Marker,
   Popup,
   TileLayer,
-  useMap,
   useMapEvents,
 } from "react-leaflet";
-import type { Map as LeafletMap, LocationEvent } from "leaflet";
+import type { LocationEvent } from "leaflet";
 import { LatLng } from "leaflet";
-import Title from "@/components/Title";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -24,12 +21,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { MapPoint } from "@/app/api/dashboard/contratos/route";
-import { REGIOES } from "@/app/api/dashboard/contratos/route";
+import type { MapPoint } from "@/app/api/dashboard/contratos/_types";
+import { REGIOES } from "@/app/api/dashboard/contratos/_fetchers";
+import { useRouter } from "next/navigation";
 
-// ─── Fix Leaflet default icon (webpack apaga os paths em build) ───────────────
-// Feito em um módulo isolado pra não quebrar SSR — só roda no client.
-// Se já estiver corrigido globalmente no seu projeto, remova este bloco.
+// ─── Fix Leaflet default icon ─────────────────────────────────────────────────
+
 if (typeof window !== "undefined") {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const L = require("leaflet") as typeof import("leaflet");
@@ -40,6 +37,21 @@ if (typeof window !== "undefined") {
     iconUrl:       "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
     shadowUrl:     "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
   });
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Chave React garantidamente única: dígitos do CNPJ + dígitos do contrato_ano */
+function pointKey(point: MapPoint): string {
+  return (
+    point.cnpj.replace(/\D/g, "") +
+    point.contrato_ano.replace(/\D/g, "")
+  );
+}
+
+/** CNPJ limpo (só dígitos) usado como parâmetro de rota */
+function cnpjParam(point: MapPoint): string {
+  return point.cnpj.replace(/\D/g, "");
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -65,14 +77,13 @@ const UFS_BR = [
   "RO","RR","RS","SC","SE","SP","TO",
 ];
 
-// ─── Sub-component: fly to user location ─────────────────────────────────────
+// ─── LocationMarker ───────────────────────────────────────────────────────────
 
 function LocationMarker() {
   const [position, setPosition] = useState<LatLng | null>(null);
 
   useMapEvents({
     click(e) {
-      // Só localiza se clicar fora de um marker/popup
       if ((e.originalEvent.target as HTMLElement).closest(".leaflet-popup")) return;
       e.target.locate();
     },
@@ -91,24 +102,27 @@ function LocationMarker() {
   );
 }
 
-// ─── Sub-component: popup content ────────────────────────────────────────────
+// ─── ComunidadePopup ──────────────────────────────────────────────────────────
 
 function ComunidadePopup({ point }: { point: MapPoint }) {
+  const router = useRouter();
+
   function handleDetalhes() {
-    // TODO: implemente a navegação para a página de detalhes da comunidade.
-    // Sugestão: router.push(`/contratos/${encodeURIComponent(point.id)}`)
-    // ou abrir um Sheet/Dialog lateral com os dados completos.
-    console.log("Navegar para detalhes de:", point.id);
+    // Navega pelo CNPJ (só dígitos) — mesmo parâmetro que a página de detalhe espera
+    router.push(`/dashboard/comunidade/${cnpjParam(point)}`);
   }
 
   return (
     <div className="font-sans min-w-[200px]">
-      <strong className="block text-sm leading-snug mb-1">
+      <strong className="block text-sm leading-snug mb-0.5">
         {point.nome_fantasia || point.nome}
       </strong>
       {point.nome_fantasia && (
-        <span className="block text-xs text-gray-500 mb-2">{point.nome}</span>
+        <span className="block text-xs text-gray-500 mb-1">{point.nome}</span>
       )}
+      <span className="block text-xs text-gray-400 mb-2">
+        Contrato: {point.contrato_ano}
+      </span>
 
       <dl className="text-xs space-y-0.5 mb-3">
         <div className="flex gap-1">
@@ -128,26 +142,13 @@ function ComunidadePopup({ point }: { point: MapPoint }) {
           <dd>{point.recurso_mensal || "—"}</dd>
         </div>
 
-        {/* Vagas */}
         <div className="pt-1 border-t border-gray-100 mt-1">
           <dt className="text-gray-500 mb-0.5">Vagas contratadas</dt>
           <dd className="grid grid-cols-2 gap-x-3 gap-y-0.5">
-            <span>
-              Total:{" "}
-              <strong>{point.vagas_contratadas}</strong>
-            </span>
-            <span>
-              Masc.:{" "}
-              <strong>{point.adulto_masc}</strong>
-            </span>
-            <span>
-              Fem.:{" "}
-              <strong>{point.adulto_feminino}</strong>
-            </span>
-            <span>
-              Mães:{" "}
-              <strong>{point.maes}</strong>
-            </span>
+            <span>Total: <strong>{point.vagas_contratadas}</strong></span>
+            <span>Masc.: <strong>{point.adulto_masc}</strong></span>
+            <span>Fem.: <strong>{point.adulto_feminino}</strong></span>
+            <span>Mães: <strong>{point.maes}</strong></span>
           </dd>
         </div>
       </dl>
@@ -162,18 +163,17 @@ function ComunidadePopup({ point }: { point: MapPoint }) {
   );
 }
 
-// ─── Sub-component: filter sidebar ───────────────────────────────────────────
+// ─── FilterPanel ──────────────────────────────────────────────────────────────
 
 interface FilterPanelProps {
-  filters:    Filters;
-  onChange:   (f: Filters) => void;
-  total:      number;
-  loading:    boolean;
+  filters:  Filters;
+  onChange: (f: Filters) => void;
+  total:    number;
+  loading:  boolean;
 }
 
 function FilterPanel({ filters, onChange, total, loading }: FilterPanelProps) {
   function set(key: keyof Filters, value: string) {
-    // UF e região são mutuamente exclusivos — limpa o outro
     if (key === "uf" && value !== "all") {
       onChange({ ...filters, uf: value, regiao: "all" });
     } else if (key === "regiao" && value !== "all") {
@@ -185,7 +185,6 @@ function FilterPanel({ filters, onChange, total, loading }: FilterPanelProps) {
 
   return (
     <div className="flex flex-wrap items-end gap-3 px-4 py-3 border-b bg-card">
-      {/* UF */}
       <div className="flex flex-col gap-1">
         <Label className="text-xs text-muted-foreground">UF</Label>
         <Select value={filters.uf} onValueChange={(v) => set("uf", v)}>
@@ -201,7 +200,6 @@ function FilterPanel({ filters, onChange, total, loading }: FilterPanelProps) {
         </Select>
       </div>
 
-      {/* Região */}
       <div className="flex flex-col gap-1">
         <Label className="text-xs text-muted-foreground">Região</Label>
         <Select value={filters.regiao} onValueChange={(v) => set("regiao", v)}>
@@ -217,7 +215,6 @@ function FilterPanel({ filters, onChange, total, loading }: FilterPanelProps) {
         </Select>
       </div>
 
-      {/* Vagas mín */}
       <div className="flex flex-col gap-1">
         <Label className="text-xs text-muted-foreground">Vagas (mín)</Label>
         <Input
@@ -230,7 +227,6 @@ function FilterPanel({ filters, onChange, total, loading }: FilterPanelProps) {
         />
       </div>
 
-      {/* Vagas máx */}
       <div className="flex flex-col gap-1">
         <Label className="text-xs text-muted-foreground">Vagas (máx)</Label>
         <Input
@@ -243,9 +239,10 @@ function FilterPanel({ filters, onChange, total, loading }: FilterPanelProps) {
         />
       </div>
 
-      {/* Contador */}
       <span className="text-xs text-muted-foreground pb-1 ml-auto">
-        {loading ? "Carregando…" : `${total} comunidade${total !== 1 ? "s" : ""}`}
+        {loading
+          ? "Carregando…"
+          : `${total} contrato${total !== 1 ? "s" : ""}`}
       </span>
     </div>
   );
@@ -254,9 +251,10 @@ function FilterPanel({ filters, onChange, total, loading }: FilterPanelProps) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function MapaPage() {
-  const [points,  setPoints]  = useState<MapPoint[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState<string | null>(null);
+  const [allPoints, setAllPoints] = useState<MapPoint[]>([]);
+  const [points,    setPoints]    = useState<MapPoint[]>([]);
+  const [loading,   setLoading]   = useState(true);
+  const [error,     setError]     = useState<string | null>(null);
 
   const [filters, setFilters] = useState<Filters>({
     uf:       "all",
@@ -264,10 +262,6 @@ export default function MapaPage() {
     vagasMin: "",
     vagasMax: "",
   });
-
-  // Filtra client-side — evita re-fetch por cada mudança de filtro.
-  // Os params também são suportados pelo route para filtrar server-side se necessário.
-  const [allPoints, setAllPoints] = useState<MapPoint[]>([]);
 
   useEffect(() => {
     setLoading(true);
@@ -285,21 +279,16 @@ export default function MapaPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Aplica filtros client-side sempre que filters ou allPoints mudam
   useEffect(() => {
     const { uf, regiao, vagasMin, vagasMax } = filters;
     const min = vagasMin !== "" ? Number(vagasMin) : 0;
     const max = vagasMax !== "" ? Number(vagasMax) : Infinity;
-
-    const ufsRegiao =
-      regiao !== "all" ? new Set(REGIOES[regiao] ?? []) : null;
+    const ufsRegiao = regiao !== "all" ? new Set(REGIOES[regiao] ?? []) : null;
 
     setPoints(
       allPoints.filter((p) => {
         if (uf !== "all" && p.uf !== uf) return false;
-        if (!uf || uf === "all") {
-          if (ufsRegiao && !ufsRegiao.has(p.uf)) return false;
-        }
+        if (uf === "all" && ufsRegiao && !ufsRegiao.has(p.uf)) return false;
         if (p.vagas_contratadas < min) return false;
         if (p.vagas_contratadas > max) return false;
         return true;
@@ -309,7 +298,6 @@ export default function MapaPage() {
 
   return (
     <main className="flex flex-col h-full">
-
       <FilterPanel
         filters={filters}
         onChange={setFilters}
@@ -348,7 +336,7 @@ export default function MapaPage() {
 
           {points.map((point) => (
             <Marker
-              key={point.id}
+              key={pointKey(point)}   // cnpj_dígitos + contrato_ano_dígitos — sem colisão
               position={[point.lat, point.lng] as [number, number]}
             >
               <Popup minWidth={220} maxWidth={280}>
