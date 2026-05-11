@@ -175,7 +175,7 @@ function ChartTooltipContent({
   return (
     <div
       className={cn(
-        "grid min-w-32 items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs/relaxed shadow-xl",
+        "grid min-w-32 items-start gap-1.5 rounded-xl border border-border/40 bg-background/80 px-3 py-2 text-xs/relaxed shadow-2xl backdrop-blur-md transition-all duration-200",
         className
       )}
     >

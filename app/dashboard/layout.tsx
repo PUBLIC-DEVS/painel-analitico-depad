@@ -3,14 +3,15 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
-import { Inter } from "next/font/google";
+import { Outfit } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { DashboardHeader } from "@/components/dashboard-header";
 import { SpotlightProvider, SpotlightModal } from "@/components/spotlight";
+import { Wave } from "@/components/ui/wave";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+const outfit = Outfit({ subsets: ["latin"], variable: "--font-sans" });
 
 export default function DashboardLayout({
   children,
@@ -32,13 +33,16 @@ export default function DashboardLayout({
   return (
     <SpotlightProvider>
       <SpotlightModal />
-      <div className={cn("font-sans", inter.variable)}>
+      <div className={cn("font-sans", outfit.variable)}>
         <TooltipProvider>
           <SidebarProvider>
             <AppSidebar />
-            <SidebarInset className="min-w-0 overflow-hidden">
+            <SidebarInset className="min-w-0 overflow-hidden relative">
+              <Wave />
               <DashboardHeader />
-              {children}
+              <div className="relative z-10">
+                {children}
+              </div>
             </SidebarInset>
           </SidebarProvider>
         </TooltipProvider>

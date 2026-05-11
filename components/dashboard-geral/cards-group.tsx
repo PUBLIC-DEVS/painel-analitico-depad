@@ -32,16 +32,16 @@ interface CardProps {
 
 function Card({ label, value, icon }: CardProps) {
   return (
-    <div className="flex flex-1 flex-col gap-0.5 rounded-lg border border-border bg-card px-4 py-3 min-w-56">
+    <div className="flex flex-1 flex-col gap-1 rounded-xl border border-border/60 bg-card px-5 py-4 min-w-56 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-200 border-l-4 border-l-primary">
       <div className="flex items-center justify-between">
-        <span className="text-xs text-muted-foreground">{label}</span>
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
         {icon && (
-          <span className="flex items-center justify-center text-muted-foreground">
+          <span className="flex items-center justify-center text-primary/80">
             {icon}
           </span>
         )}
       </div>
-      <span className="text-xl font-semibold tracking-tight text-card-foreground">
+      <span className="text-2xl font-bold tracking-tight text-foreground">
         {value}
       </span>
     </div>

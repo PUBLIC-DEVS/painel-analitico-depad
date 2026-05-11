@@ -112,8 +112,8 @@ function formatBRLShort(value: number) {
 // Chart config
 // ---------------------------------------------------------------------------
 const chartConfig = {
-  total: { label: "Recurso Mensal", color: "hsl(var(--chart-1))" },
-  cts:   { label: "CTs Ativas",     color: "hsl(var(--chart-2))" },
+  total: { label: "Recurso Mensal", color: "oklch(var(--primary))" },
+  cts:   { label: "CTs Ativas",     color: "oklch(var(--accent))" },
 } satisfies ChartConfig;
 
 // ---------------------------------------------------------------------------
@@ -209,12 +209,14 @@ export default function AreaPagamentos() {
             <ChartLegend content={<ChartLegendContent payload={undefined} />} />
             <Area
               yAxisId="recurso" type="monotone" dataKey="total"
-              stroke="var(--color-total)" strokeWidth={2} fill="url(#fillTotal)"
+              stroke="var(--color-total)" strokeWidth={3} fill="url(#fillTotal)"
+              animationDuration={1500}
             />
             <Area
               yAxisId="cts" type="monotone" dataKey="cts"
-              stroke="var(--color-cts)" strokeWidth={2}
-              fill="url(#fillCts)" strokeDasharray="4 3"
+              stroke="var(--color-cts)" strokeWidth={3}
+              fill="url(#fillCts)" strokeDasharray="6 4"
+              animationDuration={2000}
             />
           </AreaChart>
         </ChartContainer>

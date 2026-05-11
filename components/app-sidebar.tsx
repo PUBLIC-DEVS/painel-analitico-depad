@@ -39,7 +39,7 @@ function SidebarLogo() {
       <SidebarMenuItem>
         <SidebarMenuButton size="lg" asChild tooltip="Depad">
           <Link href="/dashboard">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground shadow-sm">
               <GalleryVerticalEndIcon className="size-4" />
             </div>
             {/* group-data-[collapsible=icon]:hidden — esconde o texto quando a sidebar colapsa */}
