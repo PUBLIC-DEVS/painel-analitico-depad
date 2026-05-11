@@ -45,7 +45,7 @@ function BarPorUFSkeleton() {
 // Chart config
 // ---------------------------------------------------------------------------
 const chartConfig = {
-  total: { label: "Comunidades", color: "oklch(var(--primary))" },
+  total: { label: "Comunidades", color: "var(--primary)" },
 } satisfies ChartConfig;
 
 // ---------------------------------------------------------------------------

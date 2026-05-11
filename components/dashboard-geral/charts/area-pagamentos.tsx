@@ -112,8 +112,8 @@ function formatBRLShort(value: number) {
 // Chart config
 // ---------------------------------------------------------------------------
 const chartConfig = {
-  total: { label: "Recurso Mensal", color: "oklch(var(--primary))" },
-  cts:   { label: "CTs Ativas",     color: "oklch(var(--accent))" },
+  total: { label: "Recurso Mensal", color: "var(--primary)" },
+  cts:   { label: "CTs Ativas",     color: "var(--accent)" },
 } satisfies ChartConfig;
 
 // ---------------------------------------------------------------------------

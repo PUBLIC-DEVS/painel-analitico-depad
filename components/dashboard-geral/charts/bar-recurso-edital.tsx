@@ -68,7 +68,7 @@ function formatBRLShort(value: number) {
 // Chart config
 // ---------------------------------------------------------------------------
 const chartConfig = {
-  total: { label: "Recurso Anual", color: "oklch(var(--primary))" },
+  total: { label: "Recurso Anual", color: "var(--primary)" },
 } satisfies ChartConfig;
 
 // ---------------------------------------------------------------------------
