@@ -104,6 +104,46 @@ ${colorConfig
 
 const ChartTooltip = RechartsPrimitive.Tooltip
 
+type ChartPayloadItem = {
+  color?: string
+  dataKey?: string | number
+  name?: string | number
+  payload?: Record<string, unknown>
+  type?: string
+  value?: unknown
+}
+
+type ChartLegendPayloadItem = ChartPayloadItem & {
+  value?: string | number
+}
+
+type ChartTooltipContentProps = Omit<
+  React.ComponentProps<typeof RechartsPrimitive.Tooltip>,
+  "formatter" | "label" | "labelFormatter" | "payload"
+> &
+  React.ComponentProps<"div"> & {
+    color?: string
+    formatter?: (
+      value: unknown,
+      name: string | number,
+      item: ChartPayloadItem,
+      index: number,
+      payload?: Record<string, unknown>,
+    ) => React.ReactNode
+    hideIndicator?: boolean
+    hideLabel?: boolean
+    indicator?: "line" | "dot" | "dashed"
+    label?: React.ReactNode
+    labelClassName?: string
+    labelFormatter?: (
+      value: React.ReactNode,
+      payload: ChartPayloadItem[],
+    ) => React.ReactNode
+    labelKey?: string
+    nameKey?: string
+    payload?: ChartPayloadItem[]
+  }
+
 function ChartTooltipContent({
   active,
   payload,
@@ -118,16 +158,7 @@ function ChartTooltipContent({
   color,
   nameKey,
   labelKey,
-}: React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
-  React.ComponentProps<"div"> & {
-    hideLabel?: boolean
-    hideIndicator?: boolean
-    indicator?: "line" | "dot" | "dashed"
-    nameKey?: string
-    labelKey?: string
-    // ADICIONE ESTA LINHA ABAIXO para forçar o TS a aceitar o payload
-    payload?: any[] 
-  }) {
+}: ChartTooltipContentProps) {
   const { config } = useChart()
 
   const tooltipLabel = React.useMemo(() => {
@@ -186,11 +217,22 @@ function ChartTooltipContent({
           .map((item, index) => {
             const key = `${nameKey || item.name || item.dataKey || "value"}`
             const itemConfig = getPayloadConfigFromPayload(config, item, key)
-            const indicatorColor = color || item.payload.fill || item.color
+            const indicatorColor =
+              color ||
+              (typeof item.payload?.fill === "string"
+                ? item.payload.fill
+                : undefined) ||
+              item.color
+            const value =
+              item.value == null || item.value === ""
+                ? null
+                : typeof item.value === "number"
+                  ? item.value.toLocaleString()
+                  : String(item.value)
 
             return (
               <div
-                key={item.dataKey}
+                key={`${item.dataKey ?? index}`}
                 className={cn(
                   "flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5 [&>svg]:text-muted-foreground",
                   indicator === "dot" && "items-center"
@@ -236,9 +278,9 @@ function ChartTooltipContent({
                           {itemConfig?.label || item.name}
                         </span>
                       </div>
-                      {item.value && (
+                      {value && (
                         <span className="font-mono font-medium text-foreground tabular-nums">
-                          {item.value.toLocaleString()}
+                          {value}
                         </span>
                       )}
                     </div>
@@ -260,10 +302,11 @@ function ChartLegendContent({
   payload,
   verticalAlign = "bottom",
   nameKey,
-}: React.ComponentProps<"div"> &
-  Pick<RechartsPrimitive.LegendProps, "payload" | "verticalAlign"> & {
+}: React.ComponentProps<"div"> & {
     hideIcon?: boolean
     nameKey?: string
+    payload?: ChartLegendPayloadItem[]
+    verticalAlign?: "bottom" | "middle" | "top"
   }) {
   const { config } = useChart()
 

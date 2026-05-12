@@ -88,6 +88,20 @@ export default function BarRecursoPorEdital() {
 
   if (!data) return <BarRecursoSkeleton />;
 
+  if (data.length === 0) {
+    return (
+      <Card className="min-w-0 overflow-hidden">
+        <CardHeader>
+          <CardTitle>Recurso Anual por Edital</CardTitle>
+          <CardDescription>Previsão total de recurso financeiro por ano de edital</CardDescription>
+        </CardHeader>
+        <CardContent className="flex h-70 items-center justify-center">
+          <p className="text-sm text-muted-foreground">Nenhum dado disponível.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="min-w-0 overflow-hidden">
       <CardHeader>

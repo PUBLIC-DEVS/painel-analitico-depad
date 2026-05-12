@@ -1,5 +1,3 @@
-import { Separator } from "./ui/separator";
-
 interface TitleProps {
   title: string;
   subtitle?: string;
@@ -8,19 +6,19 @@ interface TitleProps {
 
 export default function Title(props: TitleProps) {
   return (
-    <div className="relative mb-6">
-      <div className="px-6 py-4 flex justify-between items-center bg-background/40 backdrop-blur-sm border-b">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-bold tracking-tight text-primary">
+    <div className="relative mb-6 border-b border-border/60 bg-background/80 backdrop-blur-sm">
+      <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-4 px-4 py-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex min-w-0 flex-col gap-1">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             {props.title}
           </h1>
           {props.subtitle && (
-            <p className="text-sm text-muted-foreground">
+            <p className="max-w-3xl text-sm text-muted-foreground">
               {props.subtitle}
             </p>
           )}
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
           {props.filterComponent}
         </div>
       </div>

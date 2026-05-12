@@ -67,7 +67,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import Title from "@/components/Title";
-import { PagamentosData } from "@/app/api/dashboard/contratos/route";
+import type { PagamentosData } from "@/app/api/dashboard/contratos/_types";
 
 // ============================================================
 // TYPES
@@ -116,21 +116,6 @@ interface UfEntry {
   uf: string;
   total: number;
 }
-
-const MONTHS_PT = [
-  "Jan",
-  "Fev",
-  "Mar",
-  "Abr",
-  "Mai",
-  "Jun",
-  "Jul",
-  "Ago",
-  "Set",
-  "Out",
-  "Nov",
-  "Dez",
-];
 
 // ============================================================
 // FORMATTERS
@@ -247,9 +232,6 @@ function AbaComunidades() {
   const [pageSize, setPageSize] = useState(25);
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
-
     Promise.all([
       fetchResource<Stats>("stats"),
       fetchResource<Comunidade[]>("comunidades"),
@@ -734,8 +716,6 @@ function AbaPagamentos() {
   const [showPct, setShowPct] = useState(false);
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
     fetchResource<PagamentosData>("pagamentos")
       .then(setPagamentosData)
       .catch((err) => setError(err.message))
@@ -968,23 +948,25 @@ function AbaPagamentos() {
 // ============================================================
 // PAGE
 // ============================================================
-export default function ContratosPage() {
-  const TabChanger = () => (
-    <TabsList className="border font-mono">
+function TabChanger() {
+  return (
+    <TabsList className="border bg-background/80 font-mono backdrop-blur-sm">
       <TabsTrigger value="comunidades">Comunidades</TabsTrigger>
       <TabsTrigger value="pagamentos">Pagamentos</TabsTrigger>
     </TabsList>
   );
+}
 
+export default function ContratosPage() {
   return (
     <div>
       <Tabs defaultValue="comunidades" className="w-full">
         <Title
           title="Dashboard de contratos"
-          subtitle=""
+          subtitle="Exploração detalhada da base contratual, com análise por comunidades e por pagamentos."
           filterComponent={<TabChanger />}
         />
-        <div className="flex flex-col p-4">
+        <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-6 px-4 pb-8">
           <TabsContent value="comunidades">
             <AbaComunidades />
           </TabsContent>

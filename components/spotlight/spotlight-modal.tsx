@@ -37,9 +37,11 @@ export function SpotlightModal() {
   // Foca o input quando abre
   useEffect(() => {
     if (open) {
-      setTimeout(() => inputRef.current?.focus(), 50)
-      setQuery("")
-      setActiveIndex(0)
+      setTimeout(() => {
+        inputRef.current?.focus()
+        setQuery("")
+        setActiveIndex(0)
+      }, 50)
     }
   }, [open])
 

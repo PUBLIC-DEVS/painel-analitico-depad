@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     
     // Transformamos as linhas restantes em objetos
     const dataMapped = rows.slice(1).map((row) => {
-      const obj: any = {};
+      const obj: Record<string, string | undefined> = {};
       headers.forEach((header, index) => {
         obj[header] = row[index];
       });
@@ -39,8 +39,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(finalData);
 
-  } catch (error: any) {
-    console.error("Erro Excel Graph:", error.response?.data || error.message);
+  } catch (error: unknown) {
+    console.error("Erro Excel Graph:", error);
     return NextResponse.json({ error: "Falha ao processar planilha" }, { status: 500 });
   }
 }

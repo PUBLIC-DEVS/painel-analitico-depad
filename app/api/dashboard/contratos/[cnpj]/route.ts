@@ -1,20 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { fetchGeralRows } from "../_fetchers";
+import { DASHBOARD_DEV_PREVIEW } from "@/lib/dashboard-dev-preview";
+import { getDashboardDevRows } from "@/lib/dashboard-dev-data";
+import { getErrorMessage } from "@/lib/errors";
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { cnpj: string } }
+  { params }: { params: Promise<{ cnpj: string }> }
 ) {
   try {
     const session = await auth();
     const token = session?.user?.accessToken;
     if (!token) {
-      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+      if (!DASHBOARD_DEV_PREVIEW) {
+        return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+      }
     }
 
-    const cnpjBuscado = params.cnpj.replace(/\D/g, "");
-    const rows = await fetchGeralRows(token);
+    const { cnpj } = await params;
+    const cnpjBuscado = cnpj.replace(/\D/g, "");
+    const rows = token ? await fetchGeralRows(token) : getDashboardDevRows();
 
     const comunidade = rows.find(
       (r) => r.cnpj.replace(/\D/g, "") === cnpjBuscado
@@ -28,7 +34,7 @@ export async function GET(
     }
 
     return NextResponse.json(comunidade);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 });
   }
 }

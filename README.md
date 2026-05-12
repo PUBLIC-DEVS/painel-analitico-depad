@@ -16,6 +16,18 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Local dashboard preview
+
+To inspect the dashboard UI without a real authenticated Graph session, start
+the dev server with the preview flag enabled:
+
+```bash
+NEXT_PUBLIC_DASHBOARD_DEV_PREVIEW=1 npm run dev
+```
+
+Without this flag, dashboard routes keep the normal authentication requirement.
+Local Playwright/visual-audit artifacts are ignored via `.playwright-cli/`.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

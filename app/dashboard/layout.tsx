@@ -10,6 +10,7 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { DashboardHeader } from "@/components/dashboard-header";
 import { SpotlightProvider, SpotlightModal } from "@/components/spotlight";
 import { Wave } from "@/components/ui/wave";
+import { DASHBOARD_DEV_PREVIEW } from "@/lib/dashboard-dev-preview";
 
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -22,13 +23,13 @@ export default function DashboardLayout({
   const router = useRouter();
 
   useEffect(() => {
-    if (status === "unauthenticated") {
+    if (!DASHBOARD_DEV_PREVIEW && status === "unauthenticated") {
       router.replace("/");
     }
   }, [status, router]);
 
-  if (status === "loading") return null;
-  if (status === "unauthenticated") return null;
+  if (!DASHBOARD_DEV_PREVIEW && status === "loading") return null;
+  if (!DASHBOARD_DEV_PREVIEW && status === "unauthenticated") return null;
 
   return (
     <SpotlightProvider>

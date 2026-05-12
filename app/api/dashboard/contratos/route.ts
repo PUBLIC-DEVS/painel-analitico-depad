@@ -3,6 +3,12 @@ import { auth } from "@/auth";
 import { fetchGeralRows, fetchPagamentosRows } from "./_fetchers";
 import { buildStats, buildMapa, buildPagamentos } from "./_aggregations";
 import { parseBRL } from "./_parsers";
+import { DASHBOARD_DEV_PREVIEW } from "@/lib/dashboard-dev-preview";
+import {
+  buildDashboardDevPagamentos,
+  getDashboardDevRows,
+} from "@/lib/dashboard-dev-data";
+import { getErrorMessage } from "@/lib/errors";
 
 export async function GET(req: NextRequest) {
   const resource = req.nextUrl.searchParams.get("resource") ?? "stats";
@@ -10,19 +16,33 @@ export async function GET(req: NextRequest) {
   try {
     const session = await auth();
     const token = session?.user?.accessToken;
-    if (!token) {
-      return NextResponse.json(
-        { error: "Sessão ou Token não encontrado" },
-        { status: 401 }
-      );
-    }
 
     if (resource === "pagamentos") {
+      if (!token) {
+        if (DASHBOARD_DEV_PREVIEW) {
+          return NextResponse.json(buildDashboardDevPagamentos());
+        }
+
+        return NextResponse.json(
+          { error: "Sessão ou Token não encontrado" },
+          { status: 401 }
+        );
+      }
+
       const rows = await fetchPagamentosRows(token);
       return NextResponse.json(buildPagamentos(rows));
     }
 
-    const rows = await fetchGeralRows(token);
+    if (!token) {
+      if (!DASHBOARD_DEV_PREVIEW) {
+        return NextResponse.json(
+          { error: "Sessão ou Token não encontrado" },
+          { status: 401 }
+        );
+      }
+    }
+
+    const rows = token ? await fetchGeralRows(token) : getDashboardDevRows();
 
     switch (resource) {
       case "stats":
@@ -75,7 +95,7 @@ export async function GET(req: NextRequest) {
       default:
         return NextResponse.json({ error: "Recurso inválido" }, { status: 400 });
     }
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 });
   }
 }

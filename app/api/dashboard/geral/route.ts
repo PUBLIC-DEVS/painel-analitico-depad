@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
 import { auth } from "@/auth";
+import { DASHBOARD_DEV_PREVIEW } from "@/lib/dashboard-dev-preview";
+import { getDashboardDevRows } from "@/lib/dashboard-dev-data";
+import { getErrorMessage } from "@/lib/errors";
 
 // ─── Types & Config ──────────────────────────────────────────────────────────
 
@@ -143,10 +146,12 @@ export async function GET(req: NextRequest) {
     const token = session?.user?.accessToken;
 
     if (!token) {
-      return NextResponse.json({ error: "Sessão ou Token não encontrado" }, { status: 401 });
+      if (!DASHBOARD_DEV_PREVIEW) {
+        return NextResponse.json({ error: "Sessão ou Token não encontrado" }, { status: 401 });
+      }
     }
 
-    const rows = await fetchSheetRows(token);
+    const rows = token ? await fetchSheetRows(token) : getDashboardDevRows();
 
     switch (resource) {
       case "stats":
@@ -196,7 +201,7 @@ export async function GET(req: NextRequest) {
       default:
         return NextResponse.json({ error: "Recurso inválido" }, { status: 400 });
     }
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 });
   }
 }

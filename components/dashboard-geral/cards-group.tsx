@@ -11,8 +11,8 @@ import { fetchDashboard } from "@/lib/dashboard-cache";
 // ---------------------------------------------------------------------------
 function CardSkeleton() {
   return (
-    <div className="flex flex-1 flex-col gap-0.5 rounded-lg border border-border bg-card px-4 py-3 min-w-56">
-      <div className="flex items-center justify-between">
+    <div className="flex h-full min-w-0 flex-col gap-2 rounded-xl border border-border/70 bg-card px-4 py-3 shadow-sm">
+      <div className="flex items-center justify-between gap-3">
         <span className="h-3 w-28 animate-pulse rounded bg-muted" />
         <span className="h-4 w-4 animate-pulse rounded bg-muted" />
       </div>
@@ -32,16 +32,16 @@ interface CardProps {
 
 function Card({ label, value, icon }: CardProps) {
   return (
-    <div className="flex flex-1 flex-col gap-1 rounded-xl border border-border/60 bg-card px-5 py-4 min-w-56 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-200 border-l-4 border-l-primary">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
+    <div className="flex h-full min-w-0 flex-col gap-2 rounded-xl border border-border/70 bg-card px-4 py-4 shadow-sm transition-shadow duration-200 hover:shadow-md">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{label}</span>
         {icon && (
           <span className="flex items-center justify-center text-primary/80">
             {icon}
           </span>
         )}
       </div>
-      <span className="text-2xl font-bold tracking-tight text-foreground">
+      <span className="text-2xl font-semibold tracking-tight text-foreground">
         {value}
       </span>
     </div>
@@ -55,7 +55,7 @@ type StatsData = {
   totalVagas:              number;
   vagasMasculinas:         number;
   vagasFemininas:          number;
-  vagasMaes:               number;
+  vagasParaMaes:           number;
   orcamentoAnual:          string;
   contratosRegistrados:    number;
   comunidadesTerapeuticas: number;
@@ -65,7 +65,7 @@ const STATS_CONFIG = [
   { key: "totalVagas"              as const, label: "Total de Vagas",           icon: <BedDouble size={16} /> },
   { key: "vagasMasculinas"         as const, label: "Vagas Masculinas",          icon: <User      size={16} /> },
   { key: "vagasFemininas"          as const, label: "Vagas Femininas",           icon: <Users     size={16} /> },
-  { key: "vagasMaes"               as const, label: "Vagas para Mães",           icon: <Baby      size={16} /> },
+  { key: "vagasParaMaes"           as const, label: "Vagas para Mães",           icon: <Baby      size={16} /> },
   { key: "orcamentoAnual"          as const, label: "Orçamento Anual",           icon: <Wallet    size={16} /> },
   { key: "contratosRegistrados"    as const, label: "Contratos Registrados",     icon: <FileText  size={16} /> },
   { key: "comunidadesTerapeuticas" as const, label: "Comunidades Terapêuticas",  icon: <Home      size={16} /> },
@@ -82,7 +82,7 @@ export default function CardsGroup() {
   }, []);
 
   return (
-    <div className="flex flex-wrap gap-4">
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {STATS_CONFIG.map((cfg) =>
         data ? (
           <Card key={cfg.key} label={cfg.label} value={data[cfg.key]} icon={cfg.icon} />

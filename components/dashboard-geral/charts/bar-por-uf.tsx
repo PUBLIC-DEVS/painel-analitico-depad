@@ -60,6 +60,20 @@ export default function BarPorUF() {
 
   if (!data) return <BarPorUFSkeleton />;
 
+  if (data.length === 0) {
+    return (
+      <Card className="min-w-0 overflow-hidden">
+        <CardHeader>
+          <CardTitle>Comunidades por UF</CardTitle>
+          <CardDescription>Número de CTs registradas por estado</CardDescription>
+        </CardHeader>
+        <CardContent className="flex h-[420px] items-center justify-center">
+          <p className="text-sm text-muted-foreground">Nenhum dado disponível.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="min-w-0 overflow-hidden">
       <CardHeader>

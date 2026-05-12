@@ -67,6 +67,20 @@ export default function BarPorEdital() {
 
   if (!data) return <BarPorEditalSkeleton />;
 
+  if (data.length === 0) {
+    return (
+      <Card className="min-w-0 overflow-hidden">
+        <CardHeader>
+          <CardTitle>Comunidades por Edital</CardTitle>
+          <CardDescription>Número de CTs por ano de edital</CardDescription>
+        </CardHeader>
+        <CardContent className="flex h-[280px] items-center justify-center">
+          <p className="text-sm text-muted-foreground">Nenhum dado disponível.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const total = data.reduce((acc, d) => acc + d.total, 0);
 
   return (

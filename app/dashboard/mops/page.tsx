@@ -1,7 +1,7 @@
 "use client";
 
 import "leaflet/dist/leaflet.css";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   MapContainer,
   Marker,
@@ -184,7 +184,7 @@ function FilterPanel({ filters, onChange, total, loading }: FilterPanelProps) {
   }
 
   return (
-    <div className="flex flex-wrap items-end gap-3 px-4 py-3 border-b bg-card">
+    <div className="mx-auto flex w-full max-w-[1600px] flex-wrap items-end gap-3 border-b border-border/60 bg-card/90 px-4 py-3 backdrop-blur-sm">
       <div className="flex flex-col gap-1">
         <Label className="text-xs text-muted-foreground">UF</Label>
         <Select value={filters.uf} onValueChange={(v) => set("uf", v)}>
@@ -239,7 +239,7 @@ function FilterPanel({ filters, onChange, total, loading }: FilterPanelProps) {
         />
       </div>
 
-      <span className="text-xs text-muted-foreground pb-1 ml-auto">
+      <span className="ml-auto pb-1 text-xs text-muted-foreground">
         {loading
           ? "Carregando…"
           : `${total} contrato${total !== 1 ? "s" : ""}`}
@@ -252,7 +252,6 @@ function FilterPanel({ filters, onChange, total, loading }: FilterPanelProps) {
 
 export default function MapaPage() {
   const [allPoints, setAllPoints] = useState<MapPoint[]>([]);
-  const [points,    setPoints]    = useState<MapPoint[]>([]);
   const [loading,   setLoading]   = useState(true);
   const [error,     setError]     = useState<string | null>(null);
 
@@ -264,40 +263,33 @@ export default function MapaPage() {
   });
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
     fetch("/api/dashboard/contratos?resource=mapa")
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json() as Promise<MapPoint[]>;
       })
-      .then((data) => {
-        setAllPoints(data);
-        setPoints(data);
-      })
+      .then(setAllPoints)
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => {
+  const points = useMemo(() => {
     const { uf, regiao, vagasMin, vagasMax } = filters;
     const min = vagasMin !== "" ? Number(vagasMin) : 0;
     const max = vagasMax !== "" ? Number(vagasMax) : Infinity;
     const ufsRegiao = regiao !== "all" ? new Set(REGIOES[regiao] ?? []) : null;
 
-    setPoints(
-      allPoints.filter((p) => {
+    return allPoints.filter((p) => {
         if (uf !== "all" && p.uf !== uf) return false;
         if (uf === "all" && ufsRegiao && !ufsRegiao.has(p.uf)) return false;
         if (p.vagas_contratadas < min) return false;
         if (p.vagas_contratadas > max) return false;
         return true;
-      }),
-    );
+      });
   }, [filters, allPoints]);
 
   return (
-    <main className="flex flex-col h-full">
+    <main className="flex h-full flex-col">
       <FilterPanel
         filters={filters}
         onChange={setFilters}
@@ -305,7 +297,7 @@ export default function MapaPage() {
         loading={loading}
       />
 
-      <section className="flex-1 min-h-0 isolate relative">
+      <section className="relative isolate min-h-0 flex-1">
         {loading && (
           <div className="absolute inset-0 z-[1000] flex items-center justify-center bg-background/60">
             <Skeleton className="h-10 w-48 rounded-full" />

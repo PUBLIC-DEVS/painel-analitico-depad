@@ -44,8 +44,8 @@ export function aplicarFiltros(contratos: Contrato[], filtros: Filtros): Contrat
   return contratos.filter((c) => {
     if (filtros.ufs.length > 0 && !filtros.ufs.includes(c.uf)) return false;
     if (filtros.regioes.length > 0 && !filtros.regioes.includes(c.regiao)) return false;
-    if (c.vagas > 0 && c.vagas < filtros.vagasMin) return false;
-    if (c.vagas > 0 && c.vagas > filtros.vagasMax) return false;
+    if (c.vagas < filtros.vagasMin) return false;
+    if (c.vagas > filtros.vagasMax) return false;
     return true;
   });
 }

@@ -130,6 +130,41 @@ export default function AreaPagamentos() {
   if (!yearlyData) return <AreaPagamentosSkeleton />;
 
   const data = yearlyData[activeYear];
+  if (data.length === 0) {
+    return (
+      <Card className="min-w-0 overflow-hidden">
+        <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <CardTitle>Pagamentos por Mês</CardTitle>
+            <CardDescription>
+              Recurso mensal e CTs ativas — edital <strong>{activeYear}</strong>
+            </CardDescription>
+          </div>
+
+          <ToggleGroup
+            type="single"
+            value={activeYear}
+            onValueChange={(v) => v && setActiveYear(v as Year)}
+            className="self-start shrink-0 rounded-lg border p-1"
+            size="sm"
+          >
+            {(["2021", "2022", "2024"] as Year[]).map((yr) => (
+              <ToggleGroupItem
+                key={yr}
+                value={yr}
+                className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground px-3 text-xs rounded-md"
+              >
+                {yr}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
+        </CardHeader>
+        <CardContent className="flex h-70 items-center justify-center">
+          <p className="text-sm text-muted-foreground">Nenhum dado disponível.</p>
+        </CardContent>
+      </Card>
+    );
+  }
   const totalAno = data.reduce((acc, d) => acc + d.total, 0);
   const maxCTs = Math.max(...data.map((d) => d.cts));
 

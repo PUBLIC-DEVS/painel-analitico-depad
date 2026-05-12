@@ -164,8 +164,8 @@ export function DashboardHeader() {
 
   return (
     <>
-      <header className="flex h-12 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 px-4 relative z-20">
-        <div className="flex items-center gap-2">
+      <header className="mx-auto flex h-12 w-full max-w-[1600px] shrink-0 items-center gap-2 px-4 relative z-20 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+        <div className="flex min-w-0 items-center gap-2">
           <SidebarTrigger className="-ml-1" />
           <Separator
             orientation="vertical"
@@ -200,7 +200,7 @@ export function DashboardHeader() {
         {/* Barra de pesquisa com autocomplete */}
         <form
           onSubmit={handleSubmit}
-          className="ml-auto flex items-center gap-2"
+          className="ml-auto flex min-w-0 items-center gap-2"
         >
           <div className="relative" ref={wrapperRef}>
             {/* Input */}
@@ -214,7 +214,7 @@ export function DashboardHeader() {
                 onChange={(e) => setQuery(e.target.value)}
                 onFocus={() => suggestions.length > 0 && setOpen(true)}
                 placeholder="Nome ou CNPJ..."
-                className="pl-9 pr-8 w-72"
+                className="w-[18rem] max-w-[42vw] pl-9 pr-8 md:w-[24rem]"
                 autoComplete="off"
               />
             </div>
@@ -223,7 +223,7 @@ export function DashboardHeader() {
             {open && suggestions.length > 0 && (
               <ul
                 role="listbox"
-                className="absolute z-50 top-[calc(100%+4px)] left-0 w-full min-w-[320px] rounded-lg border bg-popover shadow-lg overflow-hidden"
+                className="absolute left-0 top-[calc(100%+4px)] z-50 w-full min-w-[18rem] overflow-hidden rounded-lg border bg-popover shadow-lg md:min-w-[22rem]"
               >
                 {suggestions.map((c) => {
                   const displayName = c.nome_fantasia || c.razao_social
