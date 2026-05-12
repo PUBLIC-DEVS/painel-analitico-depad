@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import CardsGroup from "@/components/dashboard-geral/cards-group";
 import TabelaComunidades from "@/components/dashboard-geral/tabela-comunidades";
 import Title from "@/components/Title";
@@ -11,6 +12,8 @@ const BarPorEdital        = dynamic(() => import("@/components/dashboard-geral/c
 const BarRecursoPorEdital = dynamic(() => import("@/components/dashboard-geral/charts/bar-recurso-edital"),   { ssr: false, loading: () => <Skeleton className="h-[420px] w-full rounded-xl" /> });
 
 export default function Page() {
+  const [ufFilter, setUfFilter] = useState("all");
+
   return (
     <main>
       <Title
@@ -20,27 +23,26 @@ export default function Page() {
 
       <section className="dashboard-page mx-auto flex w-full max-w-[1600px] flex-col gap-6 px-4 pb-8">
         {/* Cards de resumo */}
-        <CardsGroup />
+        <CardsGroup ufFilter={ufFilter} />
 
         {/* Linha 1: Barras UF (ocupa mais espaço) + Barras Edital */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.35fr_1fr]">
-          <BarPorUF />
-          <BarPorEdital />
+          <BarPorUF 
+            activeUf={ufFilter}
+            onUfClick={(uf) => setUfFilter(prev => prev === uf ? "all" : uf)}
+          />
+          <BarPorEdital ufFilter={ufFilter} />
         </div>
         {/* Linha 2: Recurso por Edital + Área de Pagamentos */}
         <div className="grid grid-cols-1 gap-4">
-          <BarRecursoPorEdital />
+          <BarRecursoPorEdital ufFilter={ufFilter} />
         </div>
 
         {/* Tabela completa */}
-        <TabelaComunidades />
-        {/*
-          Para popular a tabela, passe os dados reais:
-          <TabelaComunidades data={comunidades} />
-
-          Onde `comunidades` é um Comunidade[] vindo de um fetch, por exemplo:
-          const comunidades = await fetch("/api/comunidades").then(r => r.json())
-        */}
+        <TabelaComunidades 
+          externalUfFilter={ufFilter}
+          onUfChange={setUfFilter}
+        />
       </section>
     </main>
   );

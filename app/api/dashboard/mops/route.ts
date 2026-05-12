@@ -1,12 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createGraphClient } from "@/lib/graph-client";
 
+import { auth } from "@/auth";
+import { DASHBOARD_DEV_PREVIEW } from "@/lib/dashboard-dev-preview";
+import { getDashboardDevRows } from "@/lib/dashboard-dev-data";
+
 export async function GET(request: NextRequest) {
-  const token = process.env.GRAPH_ACCESS_TOKEN; // Ou sua lógica de token
-  const client = createGraphClient(token || "");
+  const session = await auth();
+  const token = session?.user?.accessToken;
+
+  if (!token && !DASHBOARD_DEV_PREVIEW) {
+    return NextResponse.json({ error: "Sessão ou Token não encontrado" }, { status: 401 });
+  }
+
   const path = process.env.NEXT_PUBLIC_GRAPH_BASE_VIGENTE;
 
   try {
+    if (!token && DASHBOARD_DEV_PREVIEW) {
+      return NextResponse.json(getDashboardDevRows());
+    }
+
+    const client = createGraphClient(token || "");
     // Chamada exata solicitada com ?$select=text
     const response = await client.get(`${path}`, {
       params: { "$select": "text" }

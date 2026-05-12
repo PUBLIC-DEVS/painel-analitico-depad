@@ -58,12 +58,13 @@ const chartConfig = {
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
-export default function BarPorEdital() {
+export default function BarPorEdital({ ufFilter }: { ufFilter?: string }) {
   const [data, setData] = useState<EditalEntry[] | null>(null);
 
   useEffect(() => {
-    fetchDashboard<EditalEntry[]>("editais").then(setData).catch(console.error);
-  }, []);
+    const resource = ufFilter && ufFilter !== "all" ? `editais&uf=${ufFilter}` : "editais";
+    fetchDashboard<EditalEntry[]>(resource).then(setData).catch(console.error);
+  }, [ufFilter]);
 
   if (!data) return <BarPorEditalSkeleton />;
 
@@ -72,7 +73,10 @@ export default function BarPorEdital() {
       <Card className="min-w-0 overflow-hidden">
         <CardHeader>
           <CardTitle>Comunidades por Edital</CardTitle>
-          <CardDescription>Número de CTs por ano de edital</CardDescription>
+          <CardDescription>
+            Número de CTs por ano de edital
+            {ufFilter && ufFilter !== "all" ? ` — Filtrado por ${ufFilter}` : ""}
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex h-[280px] items-center justify-center">
           <p className="text-sm text-muted-foreground">Nenhum dado disponível.</p>
@@ -87,7 +91,10 @@ export default function BarPorEdital() {
     <Card className="min-w-0 overflow-hidden">
       <CardHeader>
         <CardTitle>Comunidades por Edital</CardTitle>
-        <CardDescription>Número de CTs por ano de edital</CardDescription>
+        <CardDescription>
+          Número de CTs por ano de edital
+          {ufFilter && ufFilter !== "all" ? ` — Filtrado por ${ufFilter}` : ""}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[280px] w-full">

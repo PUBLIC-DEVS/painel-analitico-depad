@@ -27,6 +27,7 @@ import {
   Search,
   PercentIcon,
   HashIcon,
+  X,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -67,6 +68,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import Title from "@/components/Title";
+import BarPorUF from "@/components/dashboard-geral/charts/bar-por-uf";
 import type { PagamentosData } from "@/app/api/dashboard/contratos/_types";
 
 // ============================================================
@@ -200,7 +202,7 @@ function StatusBadge({ status }: { status: string }) {
 // CHART CONFIGS
 // ============================================================
 const cfgEdital: ChartConfig = {
-  total: { label: "Comunidades", color: "hsl(var(--chart-2))" },
+  total: { label: "Total", color: "hsl(var(--chart-2))" },
 };
 const cfgUF: ChartConfig = {
   total: { label: "Comunidades", color: "hsl(var(--chart-1))" },
@@ -263,20 +265,7 @@ function AbaComunidades() {
     [comunidades],
   );
 
-  const topVagasData = useMemo(
-    () =>
-      comunidades
-        .filter((c) => c.vagas_contratadas != null)
-        .sort((a, b) => (b.vagas_contratadas ?? 0) - (a.vagas_contratadas ?? 0))
-        .slice(0, 10)
-        .map((c) => ({
-          nome: c.nome_fantasia,
-          vagas: c.vagas_contratadas ?? 0,
-        })),
-    [comunidades],
-  );
-
-  const filtered = useMemo(() => {
+  const mapFiltered = useMemo(() => {
     const q = search.toLowerCase();
     return comunidades.filter((row) => {
       const ms =
@@ -285,17 +274,83 @@ function AbaComunidades() {
         row.nome_fantasia?.toLowerCase().includes(q) ||
         row.cnpj?.includes(search) ||
         row.cidade?.toLowerCase().includes(q);
-      return (
-        ms &&
-        (statusFilter === "all" || row.status_ct === statusFilter) &&
-        (ufFilter === "all" || row.uf === ufFilter)
-      );
+      return ms && (statusFilter === "all" || row.status_ct === statusFilter);
     });
-  }, [comunidades, search, statusFilter, ufFilter]);
+  }, [comunidades, search, statusFilter]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
-  const totalEdital = editalData.reduce((a, d) => a + d.total, 0);
+  const dynamicUfData = useMemo(() => {
+    if (search === "" && statusFilter === "all" && ufData.length > 0) return ufData;
+    const counts: Record<string, number> = {};
+    for (const c of mapFiltered) {
+      if (c.uf) counts[c.uf] = (counts[c.uf] || 0) + 1;
+    }
+    return Object.entries(counts).map(([uf, total]) => ({ uf, total }));
+  }, [mapFiltered, ufData, search, statusFilter]);
+
+  const filtered = useMemo(() => {
+    return mapFiltered.filter((row) => ufFilter === "all" || row.uf === ufFilter);
+  }, [mapFiltered, ufFilter]);
+
+  const dynamicStats = useMemo(() => {
+    if (ufFilter === "all" && search === "" && statusFilter === "all" && stats) {
+      return stats;
+    }
+    let totalVagas = 0, vagasMasc = 0, vagasFem = 0, vagasMaes = 0;
+    for (const c of filtered) {
+      totalVagas += c.vagas_contratadas || 0;
+      vagasMasc += c.adulto_masc || 0;
+      vagasFem += c.adulto_feminino || 0;
+      vagasMaes += c.maes || 0;
+    }
+    return {
+      totalVagas,
+      vagasMasculinas: vagasMasc,
+      vagasFemininas: vagasFem,
+      vagasParaMaes: vagasMaes,
+      contratosRegistrados: filtered.length,
+      comunidadesTerapeuticas: filtered.length,
+      orcamentoAnual: stats ? stats.orcamentoAnual : "R$ 0",
+    };
+  }, [filtered, stats, ufFilter, search, statusFilter]);
+
+  const topVagasData = useMemo(
+    () =>
+      filtered
+        .filter((c) => c.vagas_contratadas != null)
+        .sort((a, b) => (b.vagas_contratadas ?? 0) - (a.vagas_contratadas ?? 0))
+        .slice(0, 10)
+        .map((c) => ({
+          nome: c.nome_fantasia,
+          vagas: c.vagas_contratadas ?? 0,
+        })),
+    [filtered],
+  );
+
+  const dynamicEditalData = useMemo(() => {
+    if (ufFilter === "all" && search === "" && statusFilter === "all" && editalData.length > 0) return editalData;
+    const counts: Record<string, number> = {};
+    for (const c of filtered) {
+      if (c.ano) counts[c.ano.toString()] = (counts[c.ano.toString()] || 0) + 1;
+    }
+    return Object.entries(counts)
+      .map(([edital, total]) => ({ edital, total }))
+      .sort((a, b) => a.edital.localeCompare(b.edital));
+  }, [filtered, editalData, ufFilter, search, statusFilter]);
+
+  const sorted = useMemo(() => {
+    return [...filtered].sort((a, b) => {
+      const anoA = a.ano || 0;
+      const anoB = b.ano || 0;
+      if (anoA !== anoB) return anoB - anoA;
+      const caA = a.contrato_ano || "";
+      const caB = b.contrato_ano || "";
+      return caB.localeCompare(caA);
+    });
+  }, [filtered]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
+  const paginated = sorted.slice((page - 1) * pageSize, page * pageSize);
+  const totalEdital = dynamicEditalData.reduce((a, d) => a + d.total, 0);
 
   const COLS = [
     { key: "contrato_ano", label: "Contrato/Ano" },
@@ -326,38 +381,42 @@ function AbaComunidades() {
     <div className="flex flex-col gap-4">
       {/* ── CARDS ── */}
       <div className="flex flex-wrap gap-3">
-        {loading || !stats ? (
-          Array.from({ length: 6 }).map((_, i) => <StatCardSkeleton key={i} />)
+        {loading || !dynamicStats ? (
+          <>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <StatCardSkeleton key={i} />
+            ))}
+          </>
         ) : (
           <>
             <StatCard
               label="Contratos Registrados"
-              value={stats.contratosRegistrados.toLocaleString("pt-BR")}
+              value={dynamicStats.contratosRegistrados.toLocaleString("pt-BR")}
               icon={<FileText size={16} />}
             />
             <StatCard
               label="Total de Vagas"
-              value={stats.totalVagas.toLocaleString("pt-BR")}
+              value={dynamicStats.totalVagas.toLocaleString("pt-BR")}
               icon={<BedDouble size={16} />}
             />
             <StatCard
               label="Comunidades Terapêuticas"
-              value={stats.comunidadesTerapeuticas.toLocaleString("pt-BR")}
+              value={dynamicStats.comunidadesTerapeuticas.toLocaleString("pt-BR")}
               icon={<Home size={16} />}
             />
             <StatCard
               label="Vagas para Mães Nutrizes"
-              value={stats.vagasParaMaes.toLocaleString("pt-BR")}
+              value={dynamicStats.vagasParaMaes.toLocaleString("pt-BR")}
               icon={<Baby size={16} />}
             />
             <StatCard
               label="Vagas Femininas"
-              value={stats.vagasFemininas.toLocaleString("pt-BR")}
+              value={dynamicStats.vagasFemininas.toLocaleString("pt-BR")}
               icon={<Users size={16} />}
             />
             <StatCard
               label="Vagas Masculinas"
-              value={stats.vagasMasculinas.toLocaleString("pt-BR")}
+              value={dynamicStats.vagasMasculinas.toLocaleString("pt-BR")}
               icon={<User size={16} />}
             />
           </>
@@ -379,8 +438,8 @@ function AbaComunidades() {
               <ChartContainer config={cfgEdital} className="h-64 w-full">
                 <BarChart
                   accessibilityLayer
-                  data={editalData}
-                  margin={{ top: 24 }}
+                  data={dynamicEditalData}
+                  margin={{ left: -20, right: 12, top: 24, bottom: 0 }}
                 >
                   <CartesianGrid vertical={false} />
                   <XAxis
@@ -425,52 +484,16 @@ function AbaComunidades() {
         </Card>
 
         {/* Contratos por UF */}
-        <Card className="min-w-0 overflow-hidden">
-          <CardHeader>
-            <CardTitle>Contratos por UF</CardTitle>
-            <CardDescription>
-              Número de CTs registradas por estado (top 16)
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <Skeleton className="h-64 w-full rounded-md" />
-            ) : (
-              <ChartContainer config={cfgUF} className="h-64 w-full">
-                <BarChart
-                  accessibilityLayer
-                  data={ufData.slice(0, 16)}
-                  layout="vertical"
-                  margin={{ left: 0, right: 36, top: 0, bottom: 0 }}
-                >
-                  <CartesianGrid horizontal={false} />
-                  <YAxis
-                    dataKey="uf"
-                    type="category"
-                    tickLine={false}
-                    axisLine={false}
-                    width={26}
-                    tick={{ fontSize: 11 }}
-                  />
-                  <XAxis dataKey="total" type="number" hide />
-                  <ChartTooltip
-                    cursor={false}
-                    content={<ChartTooltipContent hideLabel />}
-                  />
-                  <Bar dataKey="total" fill="var(--color-total)" radius={4}>
-                    <LabelList
-                      dataKey="total"
-                      position="right"
-                      offset={6}
-                      className="fill-foreground"
-                      fontSize={11}
-                    />
-                  </Bar>
-                </BarChart>
-              </ChartContainer>
-            )}
-          </CardContent>
-        </Card>
+        <div className="h-[420px] lg:h-auto">
+          <BarPorUF 
+            data={dynamicUfData} 
+            activeUf={ufFilter}
+            onUfClick={(uf) => {
+              setUfFilter(prev => prev === uf ? "all" : uf);
+              setPage(1);
+            }}
+          />
+        </div>
       </div>
 
       {/* ── GRÁFICO TOP VAGAS ── */}
@@ -485,38 +508,34 @@ function AbaComunidades() {
           {loading ? (
             <Skeleton className="h-56 w-full rounded-md" />
           ) : (
-            <ChartContainer config={cfgVagas} className="h-56 w-full">
-              <BarChart
-                accessibilityLayer
-                data={topVagasData}
-                layout="vertical"
-                margin={{ left: 8, right: 48, top: 0, bottom: 0 }}
-              >
-                <CartesianGrid horizontal={false} />
-                <YAxis
-                  dataKey="nome"
-                  type="category"
-                  tickLine={false}
-                  axisLine={false}
-                  width={100}
-                  tick={{ fontSize: 10 }}
-                />
-                <XAxis dataKey="vagas" type="number" hide />
-                <ChartTooltip
-                  cursor={false}
-                  content={<ChartTooltipContent hideLabel />}
-                />
-                <Bar dataKey="vagas" fill="var(--color-vagas)" radius={4}>
-                  <LabelList
-                    dataKey="vagas"
-                    position="right"
-                    offset={6}
-                    className="fill-foreground"
-                    fontSize={11}
-                  />
-                </Bar>
-              </BarChart>
-            </ChartContainer>
+            <div className="flex flex-col gap-4 py-2">
+              {topVagasData.map((d, i) => {
+                const maxVagas = Math.max(...topVagasData.map(v => v.vagas));
+                return (
+                  <div 
+                    key={i} 
+                    className="group cursor-pointer space-y-1.5"
+                    onClick={() => {
+                      setSearch(d.nome);
+                      setPage(1);
+                    }}
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-[11px] font-semibold text-foreground/80 group-hover:text-primary transition-colors truncate max-w-[280px]">
+                        {d.nome}
+                      </span>
+                      <span className="text-[11px] font-bold text-primary">{d.vagas} vagas</span>
+                    </div>
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted/50">
+                      <div 
+                        className="h-full bg-primary/70 group-hover:bg-primary transition-all duration-500 ease-out" 
+                        style={{ width: `${(d.vagas / (maxVagas || 1)) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </CardContent>
         <CardFooter className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -528,10 +547,25 @@ function AbaComunidades() {
       {/* ── TABELA ── */}
       <Card className="w-full min-w-0 overflow-hidden">
         <CardHeader>
-          <CardTitle>Comunidades Terapêuticas</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            Comunidades Terapêuticas
+            {ufFilter !== "all" && (
+              <Badge 
+                variant="default" 
+                className="bg-primary text-primary-foreground flex items-center gap-1.5 cursor-pointer hover:bg-primary/90"
+                onClick={() => {
+                  setUfFilter("all");
+                  setPage(1);
+                }}
+              >
+                UF: {ufFilter}
+                <X size={12} className="opacity-70 hover:opacity-100" />
+              </Badge>
+            )}
+          </CardTitle>
           <CardDescription>
-            {filtered.length} comunidade{filtered.length !== 1 ? "s" : ""}{" "}
-            encontrada{filtered.length !== 1 ? "s" : ""}
+            {sorted.length} comunidade{sorted.length !== 1 ? "s" : ""}{" "}
+            encontrada{sorted.length !== 1 ? "s" : ""}
             {comunidades.length > 0 && ` de ${comunidades.length} no total`}
           </CardDescription>
         </CardHeader>
@@ -673,8 +707,8 @@ function AbaComunidades() {
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <span>
               Página {page} de {totalPages}
-              {filtered.length > 0 &&
-                ` — exibindo ${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, filtered.length)} de ${filtered.length}`}
+              {sorted.length > 0 &&
+                ` — exibindo ${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, sorted.length)} de ${sorted.length}`}
             </span>
             <div className="flex items-center gap-1">
               <Button

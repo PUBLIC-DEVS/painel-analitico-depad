@@ -140,6 +140,7 @@ function buildStats(rows: Comunidade[]) {
 
 export async function GET(req: NextRequest) {
   const resource = req.nextUrl.searchParams.get("resource") ?? "stats";
+  const ufParam = req.nextUrl.searchParams.get("uf");
 
   try {
     const session = await auth();
@@ -151,7 +152,11 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const rows = token ? await fetchSheetRows(token) : getDashboardDevRows();
+    let rows = token ? await fetchSheetRows(token) : getDashboardDevRows();
+    
+    if (ufParam && ufParam !== "all") {
+      rows = rows.filter((r) => r.uf === ufParam);
+    }
 
     switch (resource) {
       case "stats":

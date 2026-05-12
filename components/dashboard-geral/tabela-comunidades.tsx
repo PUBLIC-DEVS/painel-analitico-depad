@@ -14,7 +14,7 @@ import {
   Card, CardContent, CardDescription, CardHeader, CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { fetchDashboard } from "@/lib/dashboard-cache";
 import type { Comunidade } from "@/app/api/dashboard/geral/route";
 
@@ -116,13 +116,22 @@ function TabelaSkeleton() {
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
-export default function TabelaComunidades() {
+export default function TabelaComunidades({
+  externalUfFilter,
+  onUfChange
+}: {
+  externalUfFilter?: string;
+  onUfChange?: (uf: string) => void;
+} = {}) {
   const [data, setData]               = useState<Comunidade[] | null>(null);
   const [search, setSearch]           = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [ufFilter, setUfFilter]       = useState("all");
+  const [localUfFilter, setLocalUfFilter] = useState("all");
   const [page, setPage]               = useState(1);
   const [pageSize, setPageSize]       = useState(25);
+
+  const activeUfFilter = externalUfFilter !== undefined ? externalUfFilter : localUfFilter;
+  const setActiveUfFilter = onUfChange || setLocalUfFilter;
 
   useEffect(() => {
     fetchDashboard<Comunidade[]>("comunidades").then(setData).catch(console.error);
@@ -142,20 +151,41 @@ export default function TabelaComunidades() {
       row.cnpj?.includes(search)                   ||
       row.cidade?.toLowerCase().includes(q);
     const matchStatus = statusFilter === "all" || row.status_ct === statusFilter;
-    const matchUF     = ufFilter     === "all" || row.uf        === ufFilter;
+    const matchUF     = activeUfFilter === "all" || row.uf === activeUfFilter;
     return matchSearch && matchStatus && matchUF;
   });
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const paginated  = filtered.slice((page - 1) * pageSize, page * pageSize);
+  const sorted = [...filtered].sort((a, b) => {
+    const anoA = a.ano || 0;
+    const anoB = b.ano || 0;
+    if (anoA !== anoB) return anoB - anoA;
+    const caA = a.contrato_ano || "";
+    const caB = b.contrato_ano || "";
+    return caB.localeCompare(caA);
+  });
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
+  const paginated  = sorted.slice((page - 1) * pageSize, page * pageSize);
 
   return (
     <Card className="w-full min-w-0 overflow-hidden">
       <CardHeader>
-        <CardTitle>Comunidades Terapêuticas</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          Comunidades Terapêuticas
+          {activeUfFilter !== "all" && (
+            <Badge 
+              variant="default" 
+              className="bg-primary text-primary-foreground ml-2 flex items-center gap-1.5 cursor-pointer hover:bg-primary/90"
+              onClick={() => setActiveUfFilter("all")}
+            >
+              UF: {activeUfFilter}
+              <X size={12} className="opacity-70 hover:opacity-100" />
+            </Badge>
+          )}
+        </CardTitle>
         <CardDescription>
-          {filtered.length} comunidade{filtered.length !== 1 ? "s" : ""} encontrada
-          {filtered.length !== 1 ? "s" : ""}
+          {sorted.length} comunidade{sorted.length !== 1 ? "s" : ""} encontrada
+          {sorted.length !== 1 ? "s" : ""}
           {data.length > 0 && ` de ${data.length} no total`}
         </CardDescription>
       </CardHeader>
@@ -181,7 +211,7 @@ export default function TabelaComunidades() {
               {statuses.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Select value={ufFilter} onValueChange={(v) => { setUfFilter(v); setPage(1); }}>
+          <Select value={activeUfFilter} onValueChange={(v) => { setActiveUfFilter(v); setPage(1); }}>
             <SelectTrigger className="w-24 shrink-0">
               <SelectValue placeholder="UF" />
             </SelectTrigger>
@@ -257,11 +287,11 @@ export default function TabelaComunidades() {
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>
             Página {page} de {totalPages}
-            {filtered.length > 0 &&
+            {sorted.length > 0 &&
               ` — exibindo ${(page - 1) * pageSize + 1}–${Math.min(
                 page * pageSize,
-                filtered.length,
-              )} de ${filtered.length}`}
+                sorted.length,
+              )} de ${sorted.length}`}
           </span>
           <div className="flex items-center gap-1">
             <Button

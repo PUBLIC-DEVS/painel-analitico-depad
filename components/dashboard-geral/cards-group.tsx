@@ -74,12 +74,13 @@ const STATS_CONFIG = [
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
-export default function CardsGroup() {
+export default function CardsGroup({ ufFilter }: { ufFilter?: string }) {
   const [data, setData] = useState<StatsData | null>(null);
 
   useEffect(() => {
-    fetchDashboard<StatsData>("stats").then(setData).catch(console.error);
-  }, []);
+    const resource = ufFilter && ufFilter !== "all" ? `stats&uf=${ufFilter}` : "stats";
+    fetchDashboard<StatsData>(resource).then(setData).catch(console.error);
+  }, [ufFilter]);
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

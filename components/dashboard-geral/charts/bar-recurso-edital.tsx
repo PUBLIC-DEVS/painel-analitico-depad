@@ -74,12 +74,13 @@ const chartConfig = {
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
-export default function BarRecursoPorEdital() {
+export default function BarRecursoPorEdital({ ufFilter }: { ufFilter?: string }) {
   const [data, setData] = useState<RecursoEntry[] | null>(null);
 
   useEffect(() => {
-    fetchDashboard<RecursoEntry[]>("recursos").then(setData).catch(console.error);
-  }, []);
+    const resource = ufFilter && ufFilter !== "all" ? `recursos&uf=${ufFilter}` : "recursos";
+    fetchDashboard<RecursoEntry[]>(resource).then(setData).catch(console.error);
+  }, [ufFilter]);
 
   const totalGeral = useMemo(
     () => data?.reduce((acc, d) => acc + d.total, 0) ?? 0,
@@ -93,7 +94,10 @@ export default function BarRecursoPorEdital() {
       <Card className="min-w-0 overflow-hidden">
         <CardHeader>
           <CardTitle>Recurso Anual por Edital</CardTitle>
-          <CardDescription>Previsão total de recurso financeiro por ano de edital</CardDescription>
+          <CardDescription>
+            Previsão total de recurso financeiro por ano de edital
+            {ufFilter && ufFilter !== "all" ? ` — Filtrado por ${ufFilter}` : ""}
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex h-70 items-center justify-center">
           <p className="text-sm text-muted-foreground">Nenhum dado disponível.</p>
@@ -106,7 +110,10 @@ export default function BarRecursoPorEdital() {
     <Card className="min-w-0 overflow-hidden">
       <CardHeader>
         <CardTitle>Recurso Anual por Edital</CardTitle>
-        <CardDescription>Previsão total de recurso financeiro por ano de edital</CardDescription>
+        <CardDescription>
+          Previsão total de recurso financeiro por ano de edital
+          {ufFilter && ufFilter !== "all" ? ` — Filtrado por ${ufFilter}` : ""}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-70 w-full">
