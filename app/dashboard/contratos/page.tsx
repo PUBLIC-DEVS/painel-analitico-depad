@@ -204,12 +204,6 @@ function StatusBadge({ status }: { status: string }) {
 const cfgEdital: ChartConfig = {
   total: { label: "Total", color: "hsl(var(--chart-2))" },
 };
-const cfgUF: ChartConfig = {
-  total: { label: "Comunidades", color: "hsl(var(--chart-1))" },
-};
-const cfgVagas: ChartConfig = {
-  vagas: { label: "Vagas", color: "hsl(var(--chart-3))" },
-};
 const cfgPag: ChartConfig = {
   pago: { label: "Pago", color: "hsl(var(--chart-1))" },
   previsto: { label: "Previsto", color: "hsl(var(--chart-2))" },
@@ -320,11 +314,12 @@ function AbaComunidades() {
         .sort((a, b) => (b.vagas_contratadas ?? 0) - (a.vagas_contratadas ?? 0))
         .slice(0, 10)
         .map((c) => ({
-          nome: c.nome_fantasia,
+          nome: c.nome_fantasia || c.razao_social || c.cnpj || "Sem identificação",
           vagas: c.vagas_contratadas ?? 0,
         })),
     [filtered],
   );
+  const maxTopVagas = Math.max(1, ...topVagasData.map((v) => v.vagas));
 
   const dynamicEditalData = useMemo(() => {
     if (ufFilter === "all" && search === "" && statusFilter === "all" && editalData.length > 0) return editalData;
@@ -351,6 +346,16 @@ function AbaComunidades() {
   const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
   const paginated = sorted.slice((page - 1) * pageSize, page * pageSize);
   const totalEdital = dynamicEditalData.reduce((a, d) => a + d.total, 0);
+  const normalizedSearch = search.trim();
+  const hasActiveFilters =
+    normalizedSearch !== "" || statusFilter !== "all" || ufFilter !== "all";
+
+  function clearAllFilters() {
+    setSearch("");
+    setStatusFilter("all");
+    setUfFilter("all");
+    setPage(1);
+  }
 
   const COLS = [
     { key: "contrato_ano", label: "Contrato/Ano" },
@@ -510,7 +515,6 @@ function AbaComunidades() {
           ) : (
             <div className="flex flex-col gap-4 py-2">
               {topVagasData.map((d, i) => {
-                const maxVagas = Math.max(...topVagasData.map(v => v.vagas));
                 return (
                   <div 
                     key={i} 
@@ -529,7 +533,7 @@ function AbaComunidades() {
                     <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted/50">
                       <div 
                         className="h-full bg-primary/70 group-hover:bg-primary transition-all duration-500 ease-out" 
-                        style={{ width: `${(d.vagas / (maxVagas || 1)) * 100}%` }}
+                        style={{ width: `${(d.vagas / maxTopVagas) * 100}%` }}
                       />
                     </div>
                   </div>
@@ -547,22 +551,7 @@ function AbaComunidades() {
       {/* ── TABELA ── */}
       <Card className="w-full min-w-0 overflow-hidden">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            Comunidades Terapêuticas
-            {ufFilter !== "all" && (
-              <Badge 
-                variant="default" 
-                className="bg-primary text-primary-foreground flex items-center gap-1.5 cursor-pointer hover:bg-primary/90"
-                onClick={() => {
-                  setUfFilter("all");
-                  setPage(1);
-                }}
-              >
-                UF: {ufFilter}
-                <X size={12} className="opacity-70 hover:opacity-100" />
-              </Badge>
-            )}
-          </CardTitle>
+          <CardTitle>Comunidades Terapêuticas</CardTitle>
           <CardDescription>
             {sorted.length} comunidade{sorted.length !== 1 ? "s" : ""}{" "}
             encontrada{sorted.length !== 1 ? "s" : ""}
@@ -640,6 +629,67 @@ function AbaComunidades() {
               </SelectContent>
             </Select>
           </div>
+
+          {hasActiveFilters && (
+            <div className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-xs">
+              <span className="text-muted-foreground">Filtros ativos:</span>
+              {normalizedSearch && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="h-7 max-w-full gap-1 rounded-full px-2 text-xs"
+                  onClick={() => {
+                    setSearch("");
+                    setPage(1);
+                  }}
+                >
+                  <span className="shrink-0">Busca:</span>
+                  <span className="max-w-[220px] truncate">{normalizedSearch}</span>
+                  <X className="h-3 w-3" />
+                </Button>
+              )}
+              {statusFilter !== "all" && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="h-7 gap-1 rounded-full px-2 text-xs"
+                  onClick={() => {
+                    setStatusFilter("all");
+                    setPage(1);
+                  }}
+                >
+                  Status: {statusFilter}
+                  <X className="h-3 w-3" />
+                </Button>
+              )}
+              {ufFilter !== "all" && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="h-7 gap-1 rounded-full px-2 text-xs"
+                  onClick={() => {
+                    setUfFilter("all");
+                    setPage(1);
+                  }}
+                >
+                  UF: {ufFilter}
+                  <X className="h-3 w-3" />
+                </Button>
+              )}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="ml-auto h-7 px-2 text-xs"
+                onClick={clearAllFilters}
+              >
+                Limpar filtros
+              </Button>
+            </div>
+          )}
 
           <div className="w-full overflow-x-auto rounded-md border">
             <Table style={{ width: "max-content", minWidth: "100%" }}>

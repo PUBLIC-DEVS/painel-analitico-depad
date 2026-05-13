@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ComposableMap, Geographies, Geography, Marker } from "react-simple-maps";
 import { scaleLinear } from "d3-scale";
 import {
@@ -59,16 +59,16 @@ export default function BarPorUF({
   onUfClick?: (uf: string) => void,
   activeUf?: string
 }) {
-  const [data, setData] = useState<UFEntry[] | null>(propData || null);
+  const [fetchedData, setFetchedData] = useState<UFEntry[] | null>(null);
   const [tooltipContent, setTooltipContent] = useState("");
 
   useEffect(() => {
     if (!propData) {
-      fetchDashboard<UFEntry[]>("uf").then(setData).catch(console.error);
-    } else {
-      setData(propData);
+      fetchDashboard<UFEntry[]>("uf").then(setFetchedData).catch(console.error);
     }
   }, [propData]);
+
+  const data = propData ?? fetchedData;
 
   const maxValue = useMemo(() => {
     if (!data || data.length === 0) return 0;

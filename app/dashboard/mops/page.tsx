@@ -1,16 +1,7 @@
 "use client";
 
-import "leaflet/dist/leaflet.css";
 import { useEffect, useMemo, useState } from "react";
-import {
-  MapContainer,
-  Marker,
-  Popup,
-  TileLayer,
-  useMapEvents,
-} from "react-leaflet";
-import type { LocationEvent } from "leaflet";
-import { LatLng } from "leaflet";
+import dynamic from "next/dynamic";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -23,36 +14,11 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import type { MapPoint } from "@/app/api/dashboard/contratos/_types";
 import { REGIOES } from "@/app/api/dashboard/contratos/_fetchers";
-import { useRouter } from "next/navigation";
 
-// ─── Fix Leaflet default icon ─────────────────────────────────────────────────
-
-if (typeof window !== "undefined") {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const L = require("leaflet") as typeof import("leaflet");
-  // @ts-expect-error — _getIconUrl não existe no tipo mas existe em runtime
-  delete L.Icon.Default.prototype._getIconUrl;
-  L.Icon.Default.mergeOptions({
-    iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-    iconUrl:       "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-    shadowUrl:     "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  });
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-/** Chave React garantidamente única: dígitos do CNPJ + dígitos do contrato_ano */
-function pointKey(point: MapPoint): string {
-  return (
-    point.cnpj.replace(/\D/g, "") +
-    point.contrato_ano.replace(/\D/g, "")
-  );
-}
-
-/** CNPJ limpo (só dígitos) usado como parâmetro de rota */
-function cnpjParam(point: MapPoint): string {
-  return point.cnpj.replace(/\D/g, "");
-}
+const MapCanvas = dynamic(() => import("@/components/dashboard-mops/map-canvas"), {
+  ssr: false,
+  loading: () => <Skeleton className="h-full w-full rounded-none" />,
+});
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -76,94 +42,6 @@ const UFS_BR = [
   "MG","MS","MT","PA","PB","PE","PI","PR","RJ","RN",
   "RO","RR","RS","SC","SE","SP","TO",
 ];
-
-// ─── LocationMarker ───────────────────────────────────────────────────────────
-
-function LocationMarker() {
-  const [position, setPosition] = useState<LatLng | null>(null);
-
-  useMapEvents({
-    click(e) {
-      if ((e.originalEvent.target as HTMLElement).closest(".leaflet-popup")) return;
-      e.target.locate();
-    },
-    locationfound(e: LocationEvent) {
-      setPosition(e.latlng);
-      e.target.flyTo(e.latlng, e.target.getZoom());
-    },
-  });
-
-  if (!position) return null;
-
-  return (
-    <Marker position={position}>
-      <Popup>Você está aqui</Popup>
-    </Marker>
-  );
-}
-
-// ─── ComunidadePopup ──────────────────────────────────────────────────────────
-
-function ComunidadePopup({ point }: { point: MapPoint }) {
-  const router = useRouter();
-
-  function handleDetalhes() {
-    // Navega pelo CNPJ (só dígitos) — mesmo parâmetro que a página de detalhe espera
-    router.push(`/dashboard/comunidade/${cnpjParam(point)}`);
-  }
-
-  return (
-    <div className="font-sans min-w-[200px]">
-      <strong className="block text-sm leading-snug mb-0.5">
-        {point.nome_fantasia || point.nome}
-      </strong>
-      {point.nome_fantasia && (
-        <span className="block text-xs text-gray-500 mb-1">{point.nome}</span>
-      )}
-      <span className="block text-xs text-gray-400 mb-2">
-        Contrato: {point.contrato_ano}
-      </span>
-
-      <dl className="text-xs space-y-0.5 mb-3">
-        <div className="flex gap-1">
-          <dt className="text-gray-500 shrink-0">CNPJ</dt>
-          <dd className="font-mono">{point.cnpj || "—"}</dd>
-        </div>
-        <div className="flex gap-1">
-          <dt className="text-gray-500 shrink-0">Localidade</dt>
-          <dd>{point.cidade ? `${point.cidade} / ${point.uf}` : point.uf || "—"}</dd>
-        </div>
-        <div className="flex gap-1">
-          <dt className="text-gray-500 shrink-0">Status</dt>
-          <dd>{point.status_ct || "—"}</dd>
-        </div>
-        <div className="flex gap-1">
-          <dt className="text-gray-500 shrink-0">Recurso/mês</dt>
-          <dd>{point.recurso_mensal || "—"}</dd>
-        </div>
-
-        <div className="pt-1 border-t border-gray-100 mt-1">
-          <dt className="text-gray-500 mb-0.5">Vagas contratadas</dt>
-          <dd className="grid grid-cols-2 gap-x-3 gap-y-0.5">
-            <span>Total: <strong>{point.vagas_contratadas}</strong></span>
-            <span>Masc.: <strong>{point.adulto_masc}</strong></span>
-            <span>Fem.: <strong>{point.adulto_feminino}</strong></span>
-            <span>Mães: <strong>{point.maes}</strong></span>
-          </dd>
-        </div>
-      </dl>
-
-      <button
-        onClick={handleDetalhes}
-        className="w-full text-xs text-center rounded border border-gray-300 px-2 py-1 hover:bg-gray-50 transition-colors"
-      >
-        Mais detalhes →
-      </button>
-    </div>
-  );
-}
-
-// ─── FilterPanel ──────────────────────────────────────────────────────────────
 
 interface FilterPanelProps {
   filters:  Filters;
@@ -289,7 +167,7 @@ export default function MapaPage() {
   }, [filters, allPoints]);
 
   return (
-    <main className="flex h-full flex-col">
+    <main className="flex min-h-[calc(100vh-4rem)] flex-col">
       <FilterPanel
         filters={filters}
         onChange={setFilters}
@@ -297,7 +175,7 @@ export default function MapaPage() {
         loading={loading}
       />
 
-      <section className="relative isolate min-h-0 flex-1">
+      <section className="relative isolate min-h-[520px] flex-1">
         {loading && (
           <div className="absolute inset-0 z-[1000] flex items-center justify-center bg-background/60">
             <Skeleton className="h-10 w-48 rounded-full" />
@@ -312,31 +190,7 @@ export default function MapaPage() {
           </div>
         )}
 
-        <MapContainer
-          center={[-15.7801, -47.9292]}
-          zoom={4}
-          touchZoom
-          scrollWheelZoom
-          className="h-full w-full"
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-
-          <LocationMarker />
-
-          {points.map((point) => (
-            <Marker
-              key={pointKey(point)}   // cnpj_dígitos + contrato_ano_dígitos — sem colisão
-              position={[point.lat, point.lng] as [number, number]}
-            >
-              <Popup minWidth={220} maxWidth={280}>
-                <ComunidadePopup point={point} />
-              </Popup>
-            </Marker>
-          ))}
-        </MapContainer>
+        <MapCanvas points={points} />
       </section>
     </main>
   );
