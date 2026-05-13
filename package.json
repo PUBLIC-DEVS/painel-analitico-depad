@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "bash scripts/smoke-test.sh",
+    "test:quick": "bash scripts/smoke-test.sh --quick"
   },
   "dependencies": {
     "@auth/core": "^0.41.1",
