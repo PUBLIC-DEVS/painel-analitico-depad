@@ -252,7 +252,7 @@ export default function BarPorUF({
         
         {/* Tooltip Overlay */}
         {tooltipContent && (
-          <div className="absolute top-4 right-4 bg-background/90 backdrop-blur-sm border shadow-lg px-3 py-2 rounded-md text-sm font-medium z-10 pointer-events-none transition-opacity">
+          <div className="absolute top-4 right-4 bg-card/95 backdrop-blur-md border border-border/50 shadow-xl px-4 py-2.5 rounded-lg text-sm font-semibold z-10 pointer-events-none transition-all animate-in fade-in zoom-in-95 duration-200">
             {tooltipContent}
           </div>
         )}

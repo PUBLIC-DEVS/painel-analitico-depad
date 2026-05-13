@@ -48,29 +48,21 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 main {
-  animation: fadeIn 0.2s ease-out;
+  animation: fadeIn 0.3s ease-out;
 }
 
 @keyframes yTransform {
-  from {
-    transform: translateY(20px);
-  }
-  to {
-    transform: translateY(0);
-  }
+  from { transform: translateY(16px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 .dashboard-page {
-  animation: yTransform 0.4s ease-out;
+  animation: yTransform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 :root {
@@ -92,11 +84,11 @@ main {
   --border: oklch(0.9 0.02 270);
   --input: oklch(0.9 0.02 270);
   --ring: oklch(0.33 0.16 271.8);
-  --chart-1: 271 60% 40%; /* Derived from primary blue */
-  --chart-2: 27 80% 55%;  /* Derived from accent red */
-  --chart-3: 150 70% 45%; /* Brasil Green */
-  --chart-4: 85 80% 60%;  /* Brasil Yellow */
-  --chart-5: 271 40% 60%;
+  --chart-1: 225 65% 38%;  /* DEPAD Deep Blue */
+  --chart-2: 190 75% 42%;  /* Complementary Teal */
+  --chart-3: 210 60% 55%;  /* Soft Steel Blue */
+  --chart-4: 38 85% 58%;   /* Warm Amber accent */
+  --chart-5: 250 45% 58%;  /* Soft Violet */
   --radius: 0.75rem;
   --sidebar: oklch(0.98 0.01 270);
   --sidebar-foreground: oklch(0.2 0.05 270);

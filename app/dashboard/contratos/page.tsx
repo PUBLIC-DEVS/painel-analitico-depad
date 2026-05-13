@@ -155,12 +155,17 @@ interface StatCardProps {
 }
 function StatCard({ label, value, icon }: StatCardProps) {
   return (
-    <div className="flex flex-1 flex-col gap-0.5 rounded-lg border border-border bg-card px-4 py-3 min-w-44">
+    <div className="group relative flex flex-1 flex-col gap-0.5 rounded-xl border border-border/60 bg-card px-4 py-3 min-w-44 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 overflow-hidden">
+      <div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl bg-gradient-to-b from-primary/80 to-primary/20" />
       <div className="flex items-center justify-between">
-        <span className="text-xs text-muted-foreground">{label}</span>
-        {icon && <span className="text-muted-foreground">{icon}</span>}
+        <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">{label}</span>
+        {icon && (
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            {icon}
+          </span>
+        )}
       </div>
-      <span className="text-xl font-semibold tracking-tight">{value}</span>
+      <span className="text-xl font-bold tracking-tight">{value}</span>
     </div>
   );
 }
@@ -202,11 +207,11 @@ function StatusBadge({ status }: { status: string }) {
 // CHART CONFIGS
 // ============================================================
 const cfgEdital: ChartConfig = {
-  total: { label: "Total", color: "hsl(var(--chart-2))" },
+  total: { label: "Total", color: "hsl(var(--chart-1))" },
 };
 const cfgPag: ChartConfig = {
   pago: { label: "Pago", color: "hsl(var(--chart-1))" },
-  previsto: { label: "Previsto", color: "hsl(var(--chart-2))" },
+  previsto: { label: "Previsto", color: "hsl(var(--chart-3))" },
 };
 
 // ============================================================

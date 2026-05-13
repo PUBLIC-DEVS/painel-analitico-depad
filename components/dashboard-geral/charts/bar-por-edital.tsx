@@ -52,7 +52,7 @@ function BarPorEditalSkeleton() {
 // Chart config
 // ---------------------------------------------------------------------------
 const chartConfig = {
-  total: { label: "Comunidades", color: "hsl(var(--chart-2))" },
+  total: { label: "Comunidades", color: "hsl(var(--chart-1))" },
 } satisfies ChartConfig;
 
 // ---------------------------------------------------------------------------
@@ -103,8 +103,8 @@ export default function BarPorEdital({ ufFilter }: { ufFilter?: string }) {
             <XAxis dataKey="edital" tickLine={false} axisLine={false} tick={{ fontSize: 13 }} />
             <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 12 }} />
             <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-            <Bar dataKey="total" fill="var(--color-total)" radius={[6, 6, 0, 0]}>
-              <LabelList position="top" offset={6} className="fill-foreground" fontSize={12} />
+            <Bar dataKey="total" fill="var(--color-total)" radius={[6, 6, 0, 0]} isAnimationActive animationDuration={500} animationEasing="ease-out">
+              <LabelList position="top" offset={6} className="fill-foreground font-semibold" fontSize={12} />
             </Bar>
           </BarChart>
         </ChartContainer>
