@@ -1,14 +1,17 @@
-export default function Page() {
+import RepassesView from "@/components/dashboard-repasses/repasses-view";
+
+export default function RepassesPage() {
   return (
-    <main>
-      <div className="flex flex-1 flex-col gap-4 p-4 pt-4">
-        <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-          <div className="aspect-video rounded-xl bg-muted/50" />
-          <div className="aspect-video rounded-xl bg-muted/50" />
-          <div className="aspect-video rounded-xl bg-muted/50" />
+    <section className="h-full overflow-y-auto overscroll-contain">
+      <div className="mx-auto flex max-w-7xl flex-col gap-4 p-3">
+        <div>
+          <h1 className="text-base font-semibold tracking-tight">Repasses</h1>
+          <p className="text-sm text-muted-foreground">
+            Emendas parlamentares (TransfereGov) — indicações, situação e demanda por técnico.
+          </p>
         </div>
-        <div className="min-h-screen flex-1 rounded-xl bg-muted/50 md:min-h-min" />
+        <RepassesView />
       </div>
-    </main>
+    </section>
   );
 }

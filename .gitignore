@@ -39,4 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-/types/validator.ts
+
+# dados reais convertidos da planilha (não versionar)
+lib/data/*.json

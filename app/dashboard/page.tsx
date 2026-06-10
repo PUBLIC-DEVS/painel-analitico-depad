@@ -1,84 +1,83 @@
-"use client";
+/**
+ * Dashboard geral — visão consolidada dos contratos das CTs.
+ *
+ * Fetch "do jeito do Next": esta página é um Server Component assíncrono. Cada
+ * bloco é um Server Component que busca seus dados (lib/dashboard-data, com cache
+ * de 1h) e fica dentro de um <Suspense> — o skeleton aparece sozinho enquanto a
+ * seção carrega/streama. O filtro por UF vive na URL (?uf=XX): o mapa escreve lá
+ * e essas seções, com key={uf}, re-suspendem e recarregam só elas.
+ */
 
+import { Suspense } from "react";
+import { getStats, getPorEdital, getRecursoPorEdital } from "@/lib/dashboard-data";
 import CardsGroup from "@/components/dashboard-geral/cards-group";
-import TabelaComunidades from "@/components/dashboard-geral/tabela-comunidades";
-import Title from "@/components/Title";
-import { Button } from "@/components/ui/button";
+import BarPorEdital from "@/components/dashboard-geral/bar-por-edital";
+import BarRecursoEdital from "@/components/dashboard-geral/bar-recurso-edital";
+import MapaCard from "@/components/dashboard-geral/mapa-card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SlidersHorizontal } from "lucide-react";
-import dynamic from "next/dynamic";
-import {
-  Drawer, DrawerClose, DrawerContent, DrawerDescription,
-  DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger,
-} from "@/components/ui/drawer";
 
-const BarPorUF            = dynamic(() => import("@/components/dashboard-geral/charts/bar-por-uf"),           { ssr: false, loading: () => <Skeleton className="h-[420px] w-full rounded-xl" /> });
-const BarPorEdital        = dynamic(() => import("@/components/dashboard-geral/charts/bar-por-edital"),       { ssr: false, loading: () => <Skeleton className="h-[420px] w-full rounded-xl" /> });
-const BarRecursoPorEdital = dynamic(() => import("@/components/dashboard-geral/charts/bar-recurso-edital"),   { ssr: false, loading: () => <Skeleton className="h-[420px] w-full rounded-xl" /> });
-const AreaPagamentos      = dynamic(() => import("@/components/dashboard-geral/charts/area-pagamentos"),      { ssr: false, loading: () => <Skeleton className="h-[420px] w-full rounded-xl" /> });
+export default async function DashboardGeral({
+  searchParams,
+}: {
+  searchParams: Promise<{ uf?: string }>;
+}) {
+  const { uf = "all" } = await searchParams;
 
-function Filter() {
   return (
-    <Drawer direction="right">
-      <DrawerTrigger asChild>
-        <Button variant="default" size="lg">
-          <SlidersHorizontal className="w-4 h-4 mr-2" />
-          Filtros
-        </Button>
-      </DrawerTrigger>
-      <DrawerContent>
-        <DrawerHeader>
-          <DrawerTitle>Filtros</DrawerTitle>
-          <DrawerDescription>Selecione os filtros desejados</DrawerDescription>
-        </DrawerHeader>
-        <div className="p-4 flex flex-col gap-2">
-          <Button variant="outline">Teste 1</Button>
-          <Button variant="outline">Teste 2</Button>
-          <Button variant="outline">Teste 3</Button>
-          <Button variant="outline">Teste 4</Button>
+    <section className="h-full overflow-y-auto overscroll-contain">
+      <div className="mx-auto flex max-w-7xl flex-col gap-4 p-3">
+        <div>
+          <h1 className="text-base font-semibold tracking-tight">Dashboard geral</h1>
+          <p className="text-sm text-muted-foreground">
+            Visão consolidada dos contratos, distribuição regional e execução financeira.
+          </p>
         </div>
-        <DrawerFooter>
-          <DrawerClose asChild>
-            <Button variant="ghost">Fechar</Button>
-          </DrawerClose>
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
+
+        <Suspense key={`cards-${uf}`} fallback={<CardsSkeleton />}>
+          <SecaoCards uf={uf} />
+        </Suspense>
+
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.35fr_1fr]">
+          <MapaCard />
+          <Suspense key={`edital-${uf}`} fallback={<GraficoSkeleton />}>
+            <SecaoEdital uf={uf} />
+          </Suspense>
+        </div>
+
+        <Suspense key={`recurso-${uf}`} fallback={<GraficoSkeleton />}>
+          <SecaoRecurso uf={uf} />
+        </Suspense>
+      </div>
+    </section>
   );
 }
 
-export default function Page() {
+/* ── seções (Server Components: buscam e entregam pros componentes de UI) ── */
+
+async function SecaoCards({ uf }: { uf: string }) {
+  return <CardsGroup stats={await getStats(uf)} />;
+}
+
+async function SecaoEdital({ uf }: { uf: string }) {
+  return <BarPorEdital data={await getPorEdital(uf)} uf={uf} />;
+}
+
+async function SecaoRecurso({ uf }: { uf: string }) {
+  return <BarRecursoEdital data={await getRecursoPorEdital(uf)} uf={uf} />;
+}
+
+/* ── fallbacks de loading ── */
+
+function CardsSkeleton() {
   return (
-    <main>
-      <Title
-        title="Dashboard geral"
-        filterComponent={<Filter />}
-      />
-
-      <section className="dashboard-page p-4 flex gap-4 flex-col">
-        {/* Cards de resumo */}
-        <CardsGroup />
-
-        {/* Linha 1: Barras UF (ocupa mais espaço) + Barras Edital */}
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.4fr_1fr]">
-          <BarPorUF />
-          <BarPorEdital />
-        </div>
-        {/* Linha 2: Recurso por Edital + Área de Pagamentos */}
-        <div className="grid grid-cols-1 gap-4">
-          <BarRecursoPorEdital />
-        </div>
-
-        {/* Tabela completa */}
-        <TabelaComunidades />
-        {/*
-          Para popular a tabela, passe os dados reais:
-          <TabelaComunidades data={comunidades} />
-
-          Onde `comunidades` é um Comunidade[] vindo de um fetch, por exemplo:
-          const comunidades = await fetch("/api/comunidades").then(r => r.json())
-        */}
-      </section>
-    </main>
+    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-6">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <Skeleton key={i} className="h-18 rounded-xl" />
+      ))}
+    </div>
   );
+}
+
+function GraficoSkeleton() {
+  return <Skeleton className="h-90 w-full rounded-xl" />;
 }

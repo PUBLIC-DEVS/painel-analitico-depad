@@ -1,95 +1,24 @@
-"use client";
+import { BedDouble, User, Users, Baby, Wallet, Home, type LucideIcon } from "lucide-react";
+import { KpiCard } from "@/components/kpi-card";
+import type { getStats } from "@/lib/dashboard-data";
 
-import { useEffect, useState } from "react";
-import {
-  BedDouble, User, Users, Baby, Wallet, FileText, Home,
-} from "lucide-react";
-import { fetchDashboard } from "@/lib/dashboard-cache";
+type Stats = Awaited<ReturnType<typeof getStats>>;
 
-// ---------------------------------------------------------------------------
-// Skeleton
-// ---------------------------------------------------------------------------
-function CardSkeleton() {
-  return (
-    <div className="flex flex-1 flex-col gap-0.5 rounded-lg border border-border bg-card px-4 py-3 min-w-56">
-      <div className="flex items-center justify-between">
-        <span className="h-3 w-28 animate-pulse rounded bg-muted" />
-        <span className="h-4 w-4 animate-pulse rounded bg-muted" />
-      </div>
-      <span className="mt-1 h-6 w-20 animate-pulse rounded bg-muted" />
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Card
-// ---------------------------------------------------------------------------
-interface CardProps {
-  label: string;
-  value: string | number;
-  icon?: React.ReactNode;
-}
-
-function Card({ label, value, icon }: CardProps) {
-  return (
-    <div className="flex flex-1 flex-col gap-0.5 rounded-lg border border-border bg-card px-4 py-3 min-w-56">
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-muted-foreground">{label}</span>
-        {icon && (
-          <span className="flex items-center justify-center text-muted-foreground">
-            {icon}
-          </span>
-        )}
-      </div>
-      <span className="text-xl font-semibold tracking-tight text-card-foreground">
-        {value}
-      </span>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Types + config
-// ---------------------------------------------------------------------------
-type StatsData = {
-  totalVagas:              number;
-  vagasMasculinas:         number;
-  vagasFemininas:          number;
-  vagasMaes:               number;
-  orcamentoAnual:          string;
-  contratosRegistrados:    number;
-  comunidadesTerapeuticas: number;
-};
-
-const STATS_CONFIG = [
-  { key: "totalVagas"              as const, label: "Total de Vagas",           icon: <BedDouble size={16} /> },
-  { key: "vagasMasculinas"         as const, label: "Vagas Masculinas",          icon: <User      size={16} /> },
-  { key: "vagasFemininas"          as const, label: "Vagas Femininas",           icon: <Users     size={16} /> },
-  { key: "vagasMaes"               as const, label: "Vagas para Mães",           icon: <Baby      size={16} /> },
-  { key: "orcamentoAnual"          as const, label: "Orçamento Anual",           icon: <Wallet    size={16} /> },
-  { key: "contratosRegistrados"    as const, label: "Contratos Registrados",     icon: <FileText  size={16} /> },
-  { key: "comunidadesTerapeuticas" as const, label: "Comunidades Terapêuticas",  icon: <Home      size={16} /> },
+const STATS: { key: keyof Stats; label: string; icon: LucideIcon }[] = [
+  { key: "comunidadesTerapeuticas", label: "Comunidades", icon: Home },
+  { key: "totalVagas", label: "Total de vagas", icon: BedDouble },
+  { key: "vagasMasculinas", label: "Vagas masculinas", icon: User },
+  { key: "vagasFemininas", label: "Vagas femininas", icon: Users },
+  { key: "vagasParaMaes", label: "Vagas para mães", icon: Baby },
+  { key: "orcamentoAnual", label: "Orçamento anual", icon: Wallet },
 ];
 
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
-export default function CardsGroup() {
-  const [data, setData] = useState<StatsData | null>(null);
-
-  useEffect(() => {
-    fetchDashboard<StatsData>("stats").then(setData).catch(console.error);
-  }, []);
-
+export default function CardsGroup({ stats }: { stats: Stats }) {
   return (
-    <div className="flex flex-wrap gap-4">
-      {STATS_CONFIG.map((cfg) =>
-        data ? (
-          <Card key={cfg.key} label={cfg.label} value={data[cfg.key]} icon={cfg.icon} />
-        ) : (
-          <CardSkeleton key={cfg.key} />
-        )
-      )}
+    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-6">
+      {STATS.map(({ key, label, icon }) => (
+        <KpiCard key={key} icone={icon} rotulo={label} valor={stats[key]} />
+      ))}
     </div>
   );
 }
