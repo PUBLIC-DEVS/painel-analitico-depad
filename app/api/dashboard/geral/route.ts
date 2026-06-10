@@ -24,11 +24,11 @@ export async function GET(req: NextRequest) {
       case "comunidades":
         return NextResponse.json(await getComunidades(uf));
       case "mapa":
-        return NextResponse.json(getPontosMapa(uf));
+        return NextResponse.json(await getPontosMapa(uf));
       case "unificada":
-        return NextResponse.json(getComunidadesUnificadas());
+        return NextResponse.json(await getComunidadesUnificadas());
       case "pagamentos":
-        return NextResponse.json(getPagamentos());
+        return NextResponse.json(await getPagamentos());
       default:
         return NextResponse.json({ error: "Recurso inválido" }, { status: 400 });
     }

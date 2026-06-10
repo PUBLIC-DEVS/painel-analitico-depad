@@ -130,6 +130,39 @@ for u in unificado:
         brl(u["recurso_anual_contrato"]), brl(u["valor_repasse_total"]), u["qtd_emendas"],
         u["status_ct"], u["ano_contrato"], u["parlamentares"], u["modalidades"],
     ])
+
+def carrega(arquivo, default):
+    p = os.path.join(REPO, "lib", "data", arquivo)
+    if not os.path.exists(p): return default
+    with open(p, encoding="utf-8") as f:
+        return json.load(f)
+
+# Aba "Contratos" — contratos crus (1 coluna por campo, ordem do tipo Comunidade).
+CAMPOS = ["contrato_ano", "razao_social", "nome_fantasia", "cnpj", "processo_mae",
+          "cidade", "uf", "contrato", "ano", "endereco", "telefone", "email",
+          "vagas_contratadas", "adulto_masc", "adulto_feminino", "maes",
+          "recurso_anual", "recurso_mensal", "status_ct", "data_inicial_ct",
+          "data_vencimento_ct", "diminuicao_vagas", "sei_assinatura", "assinado",
+          "latitude", "longitude"]
+sc = out.create_sheet("Contratos")
+sc.append(CAMPOS)
+for c in contratadas:
+    sc.append([c.get(k, "") for k in CAMPOS])
+
+# Aba "Geo" — coordenadas das comunidades.
+sg = out.create_sheet("Geo")
+sg.append(["CNPJ", "Entidade", "Contrato", "UF", "Cidade", "Vagas", "Latitude", "Longitude"])
+for g in carrega("geo.json", []):
+    sg.append([g["cnpj"], g["entidade"], g["contrato"], g["uf"], g["cidade"], g["vagas"], g["lat"], g["lng"]])
+
+# Aba "Pagamentos" — série mensal 2025; orçamento anual/mensal só na 1ª linha.
+pg = carrega("pagamentos.json", {"meses": [], "orcamento": {"anual": 0, "mensal": 0}})
+sp = out.create_sheet("Pagamentos")
+sp.append(["Mês", "Valor Pago", "Vagas Masc", "Vagas Fem", "Vagas Mãe", "Orçamento Anual", "Orçamento Mensal"])
+for i, mes in enumerate(pg["meses"]):
+    extra = [pg["orcamento"]["anual"], pg["orcamento"]["mensal"]] if i == 0 else ["", ""]
+    sp.append([mes["mes"], mes["valorPago"], mes["vagasMasc"], mes["vagasFem"], mes["vagasMae"], *extra])
+
 out.save(sys.argv[2])
 
 # ── relatório ──
