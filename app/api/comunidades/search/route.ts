@@ -5,12 +5,12 @@ import { getComunidadesUnificadas } from "@/lib/dashboard-data";
  * Autocomplete da busca de comunidades (navbar). Filtra por nome ou CNPJ e
  * devolve no máximo 8 sugestões. O CNPJ volta só com dígitos, pronto pra URL.
  */
-export function GET(req: NextRequest) {
+export async function GET(req: NextRequest) {
   const q = (req.nextUrl.searchParams.get("q") ?? "").toLowerCase().trim();
   if (q.length < 2) return NextResponse.json([]);
 
   const digitos = q.replace(/\D/g, "");
-  const resultados = getComunidadesUnificadas()
+  const resultados = (await getComunidadesUnificadas())
     .filter(
       (c) =>
         c.nome.toLowerCase().includes(q) ||

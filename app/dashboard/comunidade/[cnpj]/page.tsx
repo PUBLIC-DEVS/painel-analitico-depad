@@ -18,7 +18,7 @@ const CORES_TIPO: Record<string, string> = {
 
 export async function generateMetadata({ params }: { params: Promise<{ cnpj: string }> }): Promise<Metadata> {
   const { cnpj } = await params;
-  const d = getComunidadePorCnpj(cnpj);
+  const d = await getComunidadePorCnpj(cnpj);
   return { title: d ? `${d.unificada.nome} — DEPAD` : "Comunidade não encontrada" };
 }
 
@@ -34,7 +34,7 @@ function Linha({ icone: Icone, valor }: { icone: typeof Mail; valor: string }) {
 
 export default async function ComunidadePage({ params }: { params: Promise<{ cnpj: string }> }) {
   const { cnpj } = await params;
-  const detalhe = getComunidadePorCnpj(cnpj);
+  const detalhe = await getComunidadePorCnpj(cnpj);
   if (!detalhe) notFound();
 
   const { unificada: u, contratos, ponto } = detalhe;
