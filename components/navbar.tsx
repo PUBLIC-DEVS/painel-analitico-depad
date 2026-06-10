@@ -6,7 +6,7 @@ import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import {
   LayoutDashboard, Map, FileText, Wallet, ChevronDown,
-  BadgeCheck, Database, Info, Settings, LogOut, BotIcon,
+  BadgeCheck, Database, Info, Settings, LogOut, BotIcon, CalendarDays,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -26,8 +26,9 @@ const links = [
   { href: "/dashboard/repasses",  label: "Repasses",             icon: Wallet },
   { href: "/dashboard/cebas",     label: "Cebas",                icon: BadgeCheck },
   { href: "/dashboard/base",      label: "Base de dados",        icon: Database },
-  { href: "/dashboard/mapa",      label: "Mapa das comunidades", icon: Map },
-  { href: "/dashboard/relator",   label: "Relator",              icon: BotIcon },
+  { href: "/dashboard/mapa",        label: "Mapa das comunidades", icon: Map },
+  { href: "/dashboard/calendario",  label: "Meu calendário de eventos", icon: CalendarDays },
+  { href: "/dashboard/relator",     label: "Relator",              icon: BotIcon },
 ];
 
 // Iniciais a partir do nome ("João Eduardo" → "JE"), pro fallback do avatar.
@@ -55,17 +56,17 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background">
-      <div className="flex h-13 items-center justify-between gap-4 px-6">
+      <div className="flex h-13 items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6">
         {/* Logo DEPAD — azul no tema claro, branca no escuro */}
         <Link href="/dashboard" className="flex shrink-0 items-center" aria-label="DEPAD — Apoio e Acolhimento">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-depad.svg" alt="DEPAD" className="h-8 w-auto dark:hidden" />
+          <img src="/logo-depad.svg" alt="DEPAD" className="h-7 w-auto sm:h-8 dark:hidden" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-depad-branco.svg" alt="DEPAD" className="hidden h-8 w-auto dark:block" />
+          <img src="/logo-depad-branco.svg" alt="DEPAD" className="hidden h-7 w-auto sm:h-8 dark:block" />
         </Link>
 
-        {/* Busca de comunidade com autocomplete — meio da navbar */}
-        <div className="hidden w-72 shrink-0 sm:block lg:w-96">
+        {/* Busca de comunidade — preenche o meio no mobile, largura fixa no desktop */}
+        <div className="min-w-0 flex-1 sm:w-72 sm:flex-none lg:w-96">
           <BuscaComunidades />
         </div>
 
@@ -116,8 +117,8 @@ export function Navbar() {
 
       <Separator />
 
-      {/* Links de navegação */}
-      <nav className="flex h-9 items-center gap-1 px-6">
+      {/* Links de navegação — rolam na horizontal no mobile (sem barra visível) */}
+      <nav className="flex h-9 items-center gap-1 overflow-x-auto px-3 sm:px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {links.map(({ href, label, icon: Icon }) => {
           const active = pathname === href;
           return (
@@ -125,7 +126,7 @@ export function Navbar() {
               key={href}
               href={href}
               className={cn(
-                "flex h-full items-center gap-1.5 border-b-[1.5px] px-2.5 text-xs transition-colors",
+                "flex h-full shrink-0 items-center gap-1.5 border-b-[1.5px] px-2.5 text-xs transition-colors",
                 active
                   ? "border-primary font-medium text-foreground"
                   : "border-transparent text-muted-foreground hover:text-foreground",
@@ -143,6 +144,7 @@ export function Navbar() {
         onOpenChange={setConfigOpen}
         nomeUsuario={nome}
         emailUsuario={email}
+        fotoUsuario={foto}
       />
     </header>
   );

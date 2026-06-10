@@ -2,11 +2,14 @@
 
 /**
  * Busca de comunidade na navbar, com autocomplete por nome ou CNPJ.
- * Debounce de 180ms, consulta /api/comunidades/search e, ao escolher, navega
- * pra página individual da comunidade (/dashboard/comunidade/[cnpj]).
+ *
+ * Dois caminhos:
+ *   • clicar numa recomendação → vai direto pra comunidade (escolha exata);
+ *   • Enter → vai pra /dashboard/busca, que resolve: nome ou CNPJ idêntico
+ *     (com/sem formatação) → comunidade; parecido → lista de resultados.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -57,22 +60,34 @@ export function BuscaComunidades() {
     return () => document.removeEventListener("mousedown", fora);
   }, []);
 
+  // Recomendação clicada = escolha exata → vai direto.
   const abrir = (cnpj: string) => {
     setAberto(false);
     setQ("");
     router.push(`/dashboard/comunidade/${cnpj}`);
   };
 
+  // Enter → página de busca decide entre ir direto (exato) ou listar parecidos.
+  const aoSubmeter = (e: FormEvent) => {
+    e.preventDefault();
+    const termo = q.trim();
+    if (termo.length < 2) return;
+    setAberto(false);
+    router.push(`/dashboard/busca?q=${encodeURIComponent(termo)}`);
+  };
+
   return (
     <div ref={caixaRef} className="relative w-full">
-      <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-      <Input
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        onFocus={() => sugestoes.length > 0 && setAberto(true)}
-        placeholder="Buscar comunidade por nome ou CNPJ…"
-        className="h-8 border-border/60 bg-muted/50 pl-8 text-sm focus-visible:ring-1"
-      />
+      <form onSubmit={aoSubmeter}>
+        <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          onFocus={() => sugestoes.length > 0 && setAberto(true)}
+          placeholder="Buscar comunidade por nome ou CNPJ…"
+          className="h-8 border-border/60 bg-muted/50 pl-8 text-sm focus-visible:ring-1"
+        />
+      </form>
 
       {aberto && sugestoes.length > 0 && (
         <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-md border bg-popover shadow-lg">
