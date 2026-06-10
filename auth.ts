@@ -13,7 +13,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       authorization: {
         // offline_access é obrigatório para receber o refresh_token.
         params: {
-          scope: "openid profile email User.Read offline_access Sites.Read.All Files.Read.All",
+          scope: "openid profile email User.Read offline_access Sites.Read.All Files.Read.All Calendars.Read",
         },
       },
     }),
