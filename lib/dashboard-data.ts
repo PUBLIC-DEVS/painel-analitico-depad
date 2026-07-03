@@ -1,8 +1,9 @@
 /**
  * Camada de dados do dashboard (server-side).
  *
- * Fonte única em produção: a planilha-mestre `Dashboard/painel_master.xlsx` no
- * SharePoint, lida via Graph API, uma aba por domínio:
+ * Fonte única em produção: a planilha-mestre `General/Dashboard/painel_master.xlsx`
+ * no SharePoint (pasta do canal "Geral" do Teams), lida via Graph API, uma aba por
+ * domínio:
  *   • "Contratos"      → contratos crus (Geral, setor Contratos, detalhe)
  *   • "Base Unificada" → comunidades por CNPJ (Base de dados, busca, detalhe)
  *   • "Geo"            → coordenadas (mapa)
@@ -20,11 +21,14 @@ import { getLocalRows, getLocalGeo, getLocalUnificada, getLocalPagamentos } from
 
 /* ───────────────────────────── infra Graph ───────────────────────────── */
 
-// Mesmo site do antigo painel_depad_leve; só muda arquivo e aba.
+// Mesmo site do antigo painel_depad_leve (EquipeDEPAD). O arquivo é endereçado
+// pelo GUID (uniqueId do painel_master.xlsx em General/Dashboard) em vez do
+// caminho — sobrevive a mover/renomear a planilha ou a pasta.
+const MASTER_FILE_ID = "1948fa72-e299-4577-8c6b-e742dd68d2ff";
 const masterEndpoint = (aba: string) =>
   `https://graph.microsoft.com/v1.0/sites/` +
   `${config.sharepoint.hostname},52f29331-c2f3-49dd-a449-d2c173ec9eba,5f34bf7f-2136-4760-b81b-72e398af492d` +
-  `/drive/root:/Dashboard/painel_master.xlsx:/workbook/worksheets('${encodeURIComponent(aba)}')/usedRange?$select=text`;
+  `/drive/items/${MASTER_FILE_ID}/workbook/worksheets('${encodeURIComponent(aba)}')/usedRange?$select=text`;
 
 /** Lê uma aba da master via Graph e devolve as linhas de dados (sem o cabeçalho). */
 async function lerAba(token: string, aba: string): Promise<string[][]> {
