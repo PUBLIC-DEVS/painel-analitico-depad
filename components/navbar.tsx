@@ -6,7 +6,7 @@ import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import {
   LayoutDashboard, Map, FileText, Wallet, ChevronDown,
-  BadgeCheck, Database, Info, Settings, LogOut, BotIcon, CalendarDays,
+  BadgeCheck, Database, Info, Settings, LogOut, CalendarDays,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -19,7 +19,7 @@ import { BuscaComunidades } from "@/components/busca-comunidades";
 import { cn } from "@/lib/utils";
 
 // Ordem: visão geral → setores (contratos/repasses/cebas) → base unificada por
-// último → ferramentas (mapa/relator).
+// último → ferramentas (mapa/calendário).
 const links = [
   { href: "/dashboard",           label: "Geral",                icon: LayoutDashboard },
   { href: "/dashboard/contratos", label: "Contratos",            icon: FileText },
@@ -28,7 +28,6 @@ const links = [
   { href: "/dashboard/base",      label: "Base de dados",        icon: Database },
   { href: "/dashboard/mapa",        label: "Mapa das comunidades", icon: Map },
   { href: "/dashboard/calendario",  label: "Meu calendário de eventos", icon: CalendarDays },
-  { href: "/dashboard/relator",     label: "Relator",              icon: BotIcon },
 ];
 
 // Iniciais a partir do nome ("João Eduardo" → "JE"), pro fallback do avatar.
